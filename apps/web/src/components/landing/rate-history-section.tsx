@@ -1,10 +1,12 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
+import Link from "next/link";
 import { useGoldRate } from "@/hooks/use-gold-rate";
 import { useGoldRateHistory } from "@/hooks/use-gold-rate-history";
 import { useT } from "@/lib/i18n/use-t";
 import { formatBDT, formatDateTime } from "@gold-bd/utils";
+import { Button } from "@/components/ui/button";
 
 const WIDTH = 560;
 const HEIGHT = 220;
@@ -173,9 +175,22 @@ function RateChart({ data }: { data: { pricePerGramBDT: string; effectiveAt: str
   );
 }
 
-function GoldCalculator() {
+/** A read-only, input-styled box — visually matches the editable amount field beside it. */
+function ReadonlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <label className="block text-xs text-neutral-400">{label}</label>
+      <div className="mt-1 flex h-10 w-full items-center rounded-lg border border-white/10 bg-ink px-3 text-sm text-white">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+export function RateHistorySection() {
   const t = useT();
   const { data: rate } = useGoldRate();
+  const { data: history, isLoading } = useGoldRateHistory();
   const [amountBDT, setAmountBDT] = useState("5000");
 
   const grams = useMemo(() => {
@@ -185,47 +200,45 @@ function GoldCalculator() {
   }, [amountBDT, rate]);
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-      <p className="font-medium text-white">{t.rateHistory.calcTitle}</p>
-      <p className="mt-1 text-xs text-neutral-400">
-        {t.rateHistory.calcCurrentRate}: {rate ? formatBDT(rate.pricePerGramBDT) : "…"} {t.rateHistory.calcPerGram}
-      </p>
-
-      <label className="mt-4 block text-xs text-neutral-400" htmlFor="calc-amount">
-        {t.rateHistory.calcAmountLabel}
-      </label>
-      <input
-        id="calc-amount"
-        type="number"
-        min="0"
-        inputMode="decimal"
-        value={amountBDT}
-        onChange={(e) => setAmountBDT(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-white/15 bg-ink px-3 py-2 text-sm text-white outline-none focus:border-gold/60"
-      />
-
-      <div className="mt-4 rounded-lg bg-gold/10 p-3 text-center">
-        <p className="text-xs text-neutral-400">{t.rateHistory.calcResultLabel}</p>
-        <p className="text-xl font-semibold text-gold">{grams.toFixed(3)} g</p>
-      </div>
-    </div>
-  );
-}
-
-export function RateHistorySection() {
-  const t = useT();
-  const { data: history, isLoading } = useGoldRateHistory();
-
-  return (
     <section className="bg-ink py-20">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.rateHistory.heading}</h2>
-          <p className="mt-3 text-neutral-300">{t.rateHistory.subheading}</p>
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.rateHistory.trackerTitle}</h2>
+          <p className="mt-3 text-neutral-300">{t.rateHistory.trackerSubtitle}</p>
         </div>
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8">
+          {/* ---------- Calculator row ---------- */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block text-xs text-neutral-400" htmlFor="tracker-amount">
+                {t.rateHistory.enterAmount}
+              </label>
+              <input
+                id="tracker-amount"
+                type="number"
+                min="0"
+                inputMode="decimal"
+                value={amountBDT}
+                onChange={(e) => setAmountBDT(e.target.value)}
+                className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-ink px-3 text-sm text-white outline-none focus:border-gold/60"
+              />
+            </div>
+            <ReadonlyField label={t.rateHistory.youWillGet} value={`${grams.toFixed(3)} g`} />
+            <ReadonlyField label={t.rateHistory.livePrice} value={rate ? formatBDT(rate.pricePerGramBDT) : "…"} />
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <Button className="bg-gold text-ink hover:bg-gold-light sm:w-auto" render={<Link href="/register">{t.rateHistory.buyGold}</Link>} />
+            <Button
+              variant="outline"
+              className="border-white/20 bg-transparent text-white hover:bg-white/10 sm:w-auto"
+              render={<a href="#how-it-works">{t.rateHistory.learnMore}</a>}
+            />
+          </div>
+
+          {/* ---------- Chart ---------- */}
+          <div className="mt-8 border-t border-white/10 pt-8">
             <p className="mb-4 font-medium text-white">{t.rateHistory.chartCardTitle}</p>
             {isLoading ? (
               <p className="text-sm text-neutral-400">{t.rateHistory.loading}</p>
@@ -241,8 +254,6 @@ export function RateHistorySection() {
               <RateChart data={history} />
             )}
           </div>
-
-          <GoldCalculator />
         </div>
       </div>
     </section>

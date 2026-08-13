@@ -16,6 +16,14 @@ const dictionary = {
       openMenu: "মেনু খুলুন",
       closeMenu: "মেনু বন্ধ করুন",
     },
+    story: {
+      wordmark: "Gold BD",
+      kicker: "আমাদের গল্প",
+      heading: "স্বচ্ছ সোনার মালিকানার স্বপ্ন থেকে",
+      body: "আমরা বিশ্বাস করি সোনা কেনা জটিল কিছু হওয়া উচিত না। তাই এমন একটি প্ল্যাটফর্ম তৈরি করেছি যেখানে প্রতিটি গ্রাম সোনা, প্রতিটি টাকা — একটি স্বচ্ছ লেজারে রেকর্ড থাকে। কোনো লুকানো শর্ত নেই, কোনো জটিলতা নেই — শুধু আপনার সম্পদের উপর সম্পূর্ণ নিয়ন্ত্রণ।",
+      cta: "কিভাবে কাজ করে দেখুন",
+      sealText: "স্বচ্ছ ও যাচাইকৃত",
+    },
     hero: {
       eyebrow: "🇧🇩 বাংলাদেশের ডিজিটাল গোল্ড ওয়ালেট",
       headingLine1: "নিরাপদে সোনা কিনুন ও বিক্রি করুন,",
@@ -52,6 +60,8 @@ const dictionary = {
       },
     },
     rateHistory: {
+      trackerTitle: "লাইভ গোল্ড রেট ট্র্যাকার",
+      trackerSubtitle: "কেনার আগে আপনার পরিমাণ হিসাব করে দেখুন — স্বচ্ছ রেট, কোনো লুকানো চার্জ নেই।",
       heading: "গোল্ড রেট ও ক্যালকুলেটর",
       subheading: "এই প্ল্যাটফর্মে অ্যাডমিন যে রেট সেট করেছেন তার প্রকৃত ইতিহাস — কোনো বাহ্যিক মার্কেট ডেটা নয়।",
       chartCardTitle: "সময়ের সাথে রেট",
@@ -68,6 +78,11 @@ const dictionary = {
       calcPerGram: "/ গ্রাম",
       calcAmountLabel: "টাকার পরিমাণ (৳)",
       calcResultLabel: "আনুমানিক পরিমাণ",
+      enterAmount: "টাকার পরিমাণ লিখুন",
+      youWillGet: "আপনি পাবেন",
+      livePrice: "লাইভ রেট",
+      buyGold: "গোল্ড কিনুন",
+      learnMore: "আরও জানুন",
     },
     features: {
       heading: "প্ল্যাটফর্মের সুবিধাসমূহ",
@@ -140,6 +155,14 @@ const dictionary = {
       openMenu: "Open menu",
       closeMenu: "Close menu",
     },
+    story: {
+      wordmark: "Gold BD",
+      kicker: "Our story",
+      heading: "Built from one idea: gold ownership should be transparent",
+      body: "We believe buying gold shouldn't be complicated. So we built a platform where every gram, every taka, is recorded on a transparent ledger. No fine print, no complexity — just full control over your own assets.",
+      cta: "See how it works",
+      sealText: "Transparent & verified",
+    },
     hero: {
       eyebrow: "🇧🇩 Bangladesh's digital gold wallet",
       headingLine1: "Buy and sell gold safely,",
@@ -176,6 +199,8 @@ const dictionary = {
       },
     },
     rateHistory: {
+      trackerTitle: "LIVE Gold Rate Tracker",
+      trackerSubtitle: "Work out your purchase before you buy — a transparent rate, no hidden fees.",
       heading: "Gold rate & calculator",
       subheading: "This is the actual history of rates this platform's admin has set — not external market data.",
       chartCardTitle: "Rate over time",
@@ -192,6 +217,11 @@ const dictionary = {
       calcPerGram: "/ gram",
       calcAmountLabel: "Amount (৳)",
       calcResultLabel: "Estimated amount",
+      enterAmount: "Enter amount",
+      youWillGet: "You will get",
+      livePrice: "Live price",
+      buyGold: "Buy gold",
+      learnMore: "Learn more",
     },
     features: {
       heading: "Platform features",

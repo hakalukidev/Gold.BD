@@ -7,6 +7,7 @@ import { useGoldRate } from "@/hooks/use-gold-rate";
 import { formatBDT } from "@gold-bd/utils";
 import { useT } from "@/lib/i18n/use-t";
 import { LandingHeader } from "@/components/landing/landing-header";
+import { BrandStorySection } from "@/components/landing/brand-story-section";
 import { WhySection } from "@/components/landing/why-section";
 import { RateHistorySection } from "@/components/landing/rate-history-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
@@ -82,6 +83,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <BrandStorySection />
       <WhySection />
       <RateHistorySection />
 

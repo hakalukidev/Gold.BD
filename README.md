@@ -103,3 +103,4 @@ projects, in case you extend this:
 - Prisma CLI config (schema path, migrations, seed command, datasource URL) lives in
   `apps/web/prisma.config.ts`, not `package.json`.
 # Gold.BD
+# Gold.BD

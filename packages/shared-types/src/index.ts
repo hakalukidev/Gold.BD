@@ -1,5 +1,5 @@
-// Shared TypeScript types used by apps/web (and any future client, e.g. a mobile app).
-// Kept intentionally framework-free — no Prisma/Next imports here.
+// Shared TypeScript types used by client (and any future app, e.g. a mobile app).
+// Kept intentionally framework-free — no Next imports here.
 
 export type UserRole = "USER" | "ADMIN";
 

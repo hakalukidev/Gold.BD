@@ -3,17 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "workspaces": [
-    "apps/*",
+    "client",
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=apps/web",
-    "build": "npm run build --workspace=apps/web",
-    "start": "npm run start --workspace=apps/web",
-    "lint": "npm run lint --workspace=apps/web",
-    "db:migrate": "npm run db:migrate --workspace=apps/web",
-    "db:seed": "npm run db:seed --workspace=apps/web",
-    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
-    "docker:down": "docker compose -f docker/docker-compose.yml down"
+    "dev": "npm run dev --workspace=client",
+    "build": "npm run build --workspace=client",
+    "start": "npm run start --workspace=client",
+    "lint": "npm run lint --workspace=client"
   }
 }

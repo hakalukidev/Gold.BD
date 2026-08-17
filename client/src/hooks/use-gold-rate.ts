@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import type { GoldRateSummary } from "@gold-bd/shared-types";
+import type { GoldRateSummary } from "@/types";
 
 export function useGoldRate() {
   return useQuery({

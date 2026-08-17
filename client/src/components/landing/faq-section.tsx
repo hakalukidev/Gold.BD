@@ -7,7 +7,7 @@ export function FaqSection() {
   const t = useT();
 
   return (
-    <section id="faq" className="border-t bg-background py-20">
+    <section id="faq" className="scroll-mt-24 border-t bg-background py-20">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t.faq.heading}</h2>

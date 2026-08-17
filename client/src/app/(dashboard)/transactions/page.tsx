@@ -4,7 +4,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatBDT, formatDateTime } from "@gold-bd/utils";
+import { formatBDT, formatDateTime } from "@/lib/format";
 
 export default function TransactionsPage() {
   const { data: transactions, isLoading } = useTransactions();

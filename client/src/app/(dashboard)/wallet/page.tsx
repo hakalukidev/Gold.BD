@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { formatBDT } from "@gold-bd/utils";
+import { formatBDT } from "@/lib/format";
 
 function DepositForm() {
   const deposit = useDeposit();

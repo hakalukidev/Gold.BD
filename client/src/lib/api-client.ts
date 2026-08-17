@@ -1,4 +1,4 @@
-import type { ApiResponse } from "@gold-bd/shared-types";
+import type { ApiResponse } from "@/types";
 
 export class ApiError extends Error {
   fieldErrors?: Record<string, string[]>;

@@ -17,7 +17,7 @@ export function WhySection() {
   const active = t.why[activeTab];
 
   return (
-    <section className="bg-linear-to-b from-ink to-ink-light py-20">
+    <section id="why" className="scroll-mt-24 bg-linear-to-b from-ink to-ink-light py-20">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <div className="flex justify-center gap-2">
           {tabs.map((tab) => (

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatBDT, formatDateTime } from "@gold-bd/utils";
+import { formatBDT, formatDateTime } from "@/lib/format";
 
 interface GoldRateRow {
   id: string;

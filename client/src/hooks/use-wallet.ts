@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import type { WalletSummary } from "@gold-bd/shared-types";
+import type { WalletSummary } from "@/types";
 
 export function useWallet() {
   return useQuery({

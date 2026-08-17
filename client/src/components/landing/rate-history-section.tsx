@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useGoldRate } from "@/hooks/use-gold-rate";
 import { useGoldRateHistory } from "@/hooks/use-gold-rate-history";
 import { useT } from "@/lib/i18n/use-t";
-import { formatBDT, formatDateTime } from "@gold-bd/utils";
+import { formatBDT, formatDateTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 
 const WIDTH = 560;
@@ -200,7 +200,7 @@ export function RateHistorySection() {
   }, [amountBDT, rate]);
 
   return (
-    <section className="bg-ink py-20">
+    <section id="calculator" className="scroll-mt-24 bg-ink py-20">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-2xl font-bold text-white sm:text-3xl">{t.rateHistory.trackerTitle}</h2>
@@ -229,16 +229,17 @@ export function RateHistorySection() {
           </div>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <Button className="bg-gold text-ink hover:bg-gold-light sm:w-auto" render={<Link href="/register">{t.rateHistory.buyGold}</Link>} />
+            <Button nativeButton={false} className="bg-gold text-ink hover:bg-gold-light sm:w-auto" render={<Link href="/register">{t.rateHistory.buyGold}</Link>} />
             <Button
               variant="outline"
+              nativeButton={false}
               className="border-white/20 bg-transparent text-white hover:bg-white/10 sm:w-auto"
               render={<a href="#how-it-works">{t.rateHistory.learnMore}</a>}
             />
           </div>
 
           {/* ---------- Chart ---------- */}
-          <div className="mt-8 border-t border-white/10 pt-8">
+          <div id="rate-history" className="scroll-mt-24 mt-8 border-t border-white/10 pt-8">
             <p className="mb-4 font-medium text-white">{t.rateHistory.chartCardTitle}</p>
             {isLoading ? (
               <p className="text-sm text-neutral-400">{t.rateHistory.loading}</p>

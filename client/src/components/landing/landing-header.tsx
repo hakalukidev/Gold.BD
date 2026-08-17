@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X, Route, Sparkles, LifeBuoy } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Menu, X, Phone, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setMobileMenuOpen, toggleMobileMenu, setLocale, type Locale } from "@/store/slices/ui-slice";
 import { useT } from "@/lib/i18n/use-t";
 import { cn } from "@/lib/utils";
 
-const navIcons = [Route, Sparkles, LifeBuoy];
-const navHrefs = ["#how-it-works", "#features", "#faq"];
+const SUPPORT_PHONE = "+880 1700 000000";
 
 function LanguageToggle({ className }: { className?: string }) {
   const locale = useAppSelector((state) => state.ui.locale);
@@ -21,7 +21,7 @@ function LanguageToggle({ className }: { className?: string }) {
   ];
 
   return (
-    <div className={cn("flex items-center gap-0.5 rounded-full border border-white/10 bg-white/5 p-0.5", className)}>
+    <div className={cn("flex items-center gap-0.5 rounded-full border border-white/15 bg-white/5 p-0.5", className)}>
       {options.map((opt) => (
         <button
           key={opt.id}
@@ -30,7 +30,7 @@ function LanguageToggle({ className }: { className?: string }) {
           aria-pressed={locale === opt.id}
           className={cn(
             "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-            locale === opt.id ? "bg-gold text-ink" : "text-neutral-300 hover:text-white"
+            locale === opt.id ? "bg-gold text-ink" : "text-neutral-400 hover:text-white"
           )}
         >
           {opt.label}
@@ -43,47 +43,83 @@ function LanguageToggle({ className }: { className?: string }) {
 export function LandingHeader() {
   const mobileMenuOpen = useAppSelector((state) => state.ui.mobileMenuOpen);
   const dispatch = useAppDispatch();
+  const pathname = usePathname();
   const t = useT();
 
-  const navLinks = navHrefs.map((href, i) => ({
-    href,
-    label: [t.nav.howItWorks, t.nav.features, t.nav.support][i],
-    Icon: navIcons[i],
-  }));
+  const navLinks = [
+    { href: "/", label: t.nav.home },
+    { href: "#about", label: t.nav.aboutUs },
+    { href: "#rate-history", label: t.nav.marketRate },
+    { href: "/buy-gold", label: t.nav.buyGold },
+    { href: "#why", label: t.nav.whyUs },
+    { href: "#contact", label: t.nav.contactUs },
+  ];
+
+  const isActive = (href: string) => href === "/" && pathname === "/";
+  const closeMobileMenu = () => dispatch(setMobileMenuOpen(false));
 
   return (
-    <div className="sticky top-3 z-50 flex justify-center px-3 sm:top-4 sm:px-4">
-      <header className="w-full max-w-3xl rounded-full border border-white/10 bg-ink/90 shadow-2xl shadow-black/40 backdrop-blur-md">
-        <div className="flex items-center justify-between gap-2 px-3 py-2 sm:px-4">
-          <Link href="/" className="flex shrink-0 items-baseline gap-1 pl-1 text-base font-bold text-white">
-            Gold <span className="text-gold">BD</span>
+    <div className="sticky top-0 z-50 w-full">
+      <header className="w-full border-b border-[rgba(212,166,42,0.15)] bg-[rgba(3,3,3,0.75)] backdrop-blur-[20px]">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex shrink-0 items-center gap-2.5">
+            <span className="flex size-9 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-gold">
+              <Gem className="size-4.5" />
+            </span>
+            <span className="flex flex-col leading-none">
+              <span className="text-lg font-bold tracking-tight text-white">
+                GOLD<span className="text-gold">.BD</span>
+              </span>
+              <span className="mt-1 text-[10px] font-medium tracking-wide text-muted-white uppercase">
+                {t.nav.tagline}
+              </span>
+            </span>
           </Link>
 
-          <nav className="hidden items-center gap-1 lg:flex">
-            {navLinks.map(({ href, label, Icon }) => (
-              <a
-                key={href}
-                href={href}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-neutral-300 transition-colors hover:bg-white/10 hover:text-white"
-              >
-                <Icon className="size-3.5" />
-                {label}
-              </a>
-            ))}
+          <nav className="hidden items-center gap-7 lg:flex">
+            {navLinks.map(({ href, label }) => {
+              const active = isActive(href);
+              const linkClassName = cn(
+                "relative py-1.5 text-sm text-neutral-300 transition-colors duration-300 hover:text-gold",
+                active && "text-gold"
+              );
+              const content = (
+                <>
+                  {label}
+                  <span
+                    className={cn(
+                      "absolute -bottom-0.5 left-0 h-px w-full origin-left scale-x-0 bg-gold transition-transform duration-300",
+                      active ? "scale-x-100" : "group-hover:scale-x-100"
+                    )}
+                  />
+                </>
+              );
+              return href.startsWith("#") ? (
+                <a key={label} href={href} className={cn(linkClassName, "group")}>
+                  {content}
+                </a>
+              ) : (
+                <Link key={label} href={href} className={cn(linkClassName, "group")}>
+                  {content}
+                </Link>
+              );
+            })}
           </nav>
 
-          <div className="hidden items-center gap-2 lg:flex">
+          <div className="hidden items-center gap-4 lg:flex">
+            <a
+              href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`}
+              className="flex items-center gap-2 text-sm text-neutral-300 transition-colors hover:text-gold"
+            >
+              <Phone className="size-4 text-gold" />
+              {SUPPORT_PHONE}
+            </a>
             <LanguageToggle />
             <Button
-              variant="ghost"
               size="sm"
-              className="text-neutral-200 hover:bg-white/10 hover:text-white"
-              render={<Link href="/login">{t.nav.login}</Link>}
-            />
-            <Button
-              size="sm"
-              className="bg-gold text-ink hover:bg-gold-light"
-              render={<Link href="/register">{t.nav.register}</Link>}
+              nativeButton={false}
+              className="rounded-[11px] bg-gold px-4 font-semibold tracking-wide text-ink uppercase shadow-[0_0_18px_rgba(212,166,42,0.25)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-gold-bright hover:shadow-[0_0_26px_rgba(212,166,42,0.4)]"
+              render={<Link href="/login">{t.nav.loginSignup}</Link>}
             />
           </div>
 
@@ -102,29 +138,37 @@ export function LandingHeader() {
       </header>
 
       {mobileMenuOpen && (
-        <div className="absolute top-full mt-2 w-full max-w-3xl rounded-3xl border border-white/10 bg-ink/95 p-4 shadow-2xl backdrop-blur-md lg:hidden">
+        <div className="w-full border-b border-[rgba(212,166,42,0.15)] bg-[rgba(3,3,3,0.97)] p-4 shadow-2xl backdrop-blur-[20px] lg:hidden">
           <nav className="flex flex-col gap-1">
-            {navLinks.map(({ href, label, Icon }) => (
-              <a
-                key={href}
-                href={href}
-                onClick={() => dispatch(setMobileMenuOpen(false))}
-                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-neutral-300 hover:bg-white/10 hover:text-white"
-              >
-                <Icon className="size-4" />
-                {label}
-              </a>
-            ))}
+            {navLinks.map(({ href, label }) => {
+              const active = isActive(href);
+              const className = cn(
+                "rounded-xl px-3 py-2 text-sm transition-colors",
+                active ? "text-gold" : "text-neutral-300 hover:bg-white/10 hover:text-white"
+              );
+              return href.startsWith("#") ? (
+                <a key={label} href={href} onClick={closeMobileMenu} className={className}>
+                  {label}
+                </a>
+              ) : (
+                <Link key={label} href={href} onClick={closeMobileMenu} className={className}>
+                  {label}
+                </Link>
+              );
+            })}
           </nav>
-          <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
+          <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-3">
+            <a
+              href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`}
+              className="flex items-center gap-2 px-3 text-sm text-neutral-300"
+            >
+              <Phone className="size-4 text-gold" />
+              {SUPPORT_PHONE}
+            </a>
             <Button
-              variant="outline"
-              className="border-white/20 bg-transparent text-white hover:bg-white/10"
-              render={<Link href="/login">{t.nav.login}</Link>}
-            />
-            <Button
-              className="bg-gold text-ink hover:bg-gold-light"
-              render={<Link href="/register">{t.nav.register}</Link>}
+              nativeButton={false}
+              className="rounded-[11px] bg-gold font-semibold tracking-wide text-ink uppercase hover:bg-gold-bright"
+              render={<Link href="/login">{t.nav.loginSignup}</Link>}
             />
           </div>
         </div>

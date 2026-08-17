@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import type { PublicUser } from "@gold-bd/shared-types";
+import type { PublicUser } from "@/types";
 
 export function useMe() {
   return useQuery({

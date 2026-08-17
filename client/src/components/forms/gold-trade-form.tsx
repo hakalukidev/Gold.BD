@@ -12,7 +12,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { formatBDT } from "@gold-bd/utils";
+import { formatBDT } from "@/lib/format";
 
 export function GoldTradeForm({ side }: { side: "BUY" | "SELL" }) {
   const router = useRouter();

@@ -8,7 +8,7 @@ import { useMe } from "@/hooks/use-auth";
 import { useWallet } from "@/hooks/use-wallet";
 import { useGoldRate } from "@/hooks/use-gold-rate";
 import { useTransactions } from "@/hooks/use-transactions";
-import { formatBDT, formatDateTime } from "@gold-bd/utils";
+import { formatBDT, formatDateTime } from "@/lib/format";
 
 const kycVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   NOT_SUBMITTED: "outline",
@@ -67,9 +67,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="flex gap-3">
-        <Button render={<Link href="/buy-gold">Buy gold</Link>} />
-        <Button variant="outline" render={<Link href="/sell-gold">Sell gold</Link>} />
-        <Button variant="outline" render={<Link href="/wallet">Deposit / withdraw</Link>} />
+        <Button nativeButton={false} render={<Link href="/buy-gold">Buy gold</Link>} />
+        <Button variant="outline" nativeButton={false} render={<Link href="/sell-gold">Sell gold</Link>} />
+        <Button variant="outline" nativeButton={false} render={<Link href="/wallet">Deposit / withdraw</Link>} />
       </div>
 
       <Card>

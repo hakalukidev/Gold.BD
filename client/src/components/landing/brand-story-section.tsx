@@ -39,7 +39,7 @@ export function BrandStorySection() {
   const t = useT();
 
   return (
-    <section className="bg-linear-to-b from-cream to-cream-deep py-20">
+    <section id="about" className="scroll-mt-24 bg-linear-to-b from-cream to-cream-deep py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="overflow-hidden rounded-[2.5rem] bg-white/70 shadow-xl ring-1 ring-ink/5 backdrop-blur-sm">
           <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:items-center lg:gap-12">

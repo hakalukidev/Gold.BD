@@ -1,6 +1,3 @@
-// Shared pure-function utilities. No side effects, no framework imports — safe to use
-// from server code, client components, or a future package.
-
 /** Format a BDT amount (accepts number or numeric string) as "৳ 1,23,456.50" (South Asian grouping). */
 export function formatBDT(amount: number | string): string {
   const n = typeof amount === "string" ? Number(amount) : amount;

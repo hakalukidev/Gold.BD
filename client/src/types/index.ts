@@ -1,6 +1,3 @@
-// Shared TypeScript types used by client (and any future app, e.g. a mobile app).
-// Kept intentionally framework-free — no Next imports here.
-
 export type UserRole = "USER" | "ADMIN";
 
 export type KycStatus = "NOT_SUBMITTED" | "PENDING" | "APPROVED" | "REJECTED";

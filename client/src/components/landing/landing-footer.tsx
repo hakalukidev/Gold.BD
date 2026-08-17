@@ -23,7 +23,7 @@ export function LandingFooter() {
   ];
 
   return (
-    <footer className="border-t border-white/10 bg-ink py-12">
+    <footer id="contact" className="scroll-mt-24 border-t border-white/10 bg-ink py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid gap-8 sm:grid-cols-[1.5fr_1fr_1fr]">
           <div>

@@ -1,13 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Gem } from "lucide-react";
+import { Menu, X, Gem, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setMobileMenuOpen, toggleMobileMenu, setLocale, type Locale } from "@/store/slices/ui-slice";
 import { useT } from "@/lib/i18n/use-t";
 import { cn } from "@/lib/utils";
+
+type NavLink = { href: string; label: string };
+type NavGroup = { label: string; matchPrefix: string; items: NavLink[] };
 
 function LanguageToggle({ className }: { className?: string }) {
   const locale = useAppSelector((state) => state.ui.locale);
@@ -27,7 +37,7 @@ function LanguageToggle({ className }: { className?: string }) {
           onClick={() => dispatch(setLocale(opt.id))}
           aria-pressed={locale === opt.id}
           className={cn(
-            "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+            "rounded-full px-2.5 py-1 text-xs font-bold transition-colors",
             locale === opt.id ? "bg-gold text-ink" : "text-neutral-400 hover:text-white"
           )}
         >
@@ -43,18 +53,52 @@ export function LandingHeader() {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
   const t = useT();
+  const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
 
-  const navLinks = [
+  const navLinks: NavLink[] = [
     { href: "/", label: t.nav.home },
-    { href: "#about", label: t.nav.aboutUs },
-    { href: "#rate-history", label: t.nav.marketRate },
     { href: "/buy-gold", label: t.nav.buyGold },
-    { href: "#why", label: t.nav.whyUs },
-    { href: "#contact", label: t.nav.contactUs },
+    { href: "/#rate-history", label: t.nav.prices },
+  ];
+
+  const navGroups: NavGroup[] = [
+    {
+      label: t.nav.support,
+      matchPrefix: "/buying-guide",
+      items: [
+        { href: "/buying-guide", label: t.nav.buyingGuide },
+        { href: "/#contact", label: t.nav.contactUs },
+        { href: "/#faq", label: t.nav.faq },
+      ],
+    },
+    {
+      label: t.nav.calculator,
+      matchPrefix: "/calculator",
+      items: [
+        { href: "/calculator#gold", label: t.calculatorPage.gold.title },
+        { href: "/calculator#silver", label: t.calculatorPage.silver.title },
+        { href: "/calculator#making-charge", label: t.calculatorPage.makingCharge.title },
+        { href: "/calculator#bhori-gram", label: t.calculatorPage.bhoriGram.title },
+        { href: "/calculator#zakat", label: t.calculatorPage.zakat.title },
+      ],
+    },
+    {
+      label: t.nav.about,
+      matchPrefix: "__none__",
+      items: [
+        { href: "/#about", label: t.nav.aboutUs },
+        { href: "/#why", label: t.nav.whyUs },
+        { href: "/#how-it-works", label: t.nav.howItWorks },
+      ],
+    },
   ];
 
   const isActive = (href: string) => href === "/" && pathname === "/";
-  const closeMobileMenu = () => dispatch(setMobileMenuOpen(false));
+  const isGroupActive = (group: NavGroup) => group.matchPrefix !== "__none__" && pathname.startsWith(group.matchPrefix);
+  const closeMobileMenu = () => {
+    dispatch(setMobileMenuOpen(false));
+    setOpenMobileGroup(null);
+  };
 
   return (
     <div className="sticky top-0 z-50 w-full">
@@ -74,15 +118,18 @@ export function LandingHeader() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-7 lg:flex">
+          <nav className="hidden items-center gap-6 lg:flex">
             {navLinks.map(({ href, label }) => {
               const active = isActive(href);
-              const linkClassName = cn(
-                "relative py-1.5 text-sm text-neutral-300 transition-colors duration-300 hover:text-gold",
-                active && "text-gold"
-              );
-              const content = (
-                <>
+              return (
+                <Link
+                  key={label}
+                  href={href}
+                  className={cn(
+                    "group relative py-1.5 text-sm font-bold text-neutral-200 transition-colors duration-300 hover:text-gold",
+                    active && "text-gold"
+                  )}
+                >
                   {label}
                   <span
                     className={cn(
@@ -90,16 +137,37 @@ export function LandingHeader() {
                       active ? "scale-x-100" : "group-hover:scale-x-100"
                     )}
                   />
-                </>
-              );
-              return href.startsWith("#") ? (
-                <a key={label} href={href} className={cn(linkClassName, "group")}>
-                  {content}
-                </a>
-              ) : (
-                <Link key={label} href={href} className={cn(linkClassName, "group")}>
-                  {content}
                 </Link>
+              );
+            })}
+
+            {navGroups.map((group) => {
+              const active = isGroupActive(group);
+              return (
+                <DropdownMenu key={group.label}>
+                  <DropdownMenuTrigger
+                    openOnHover
+                    className={cn(
+                      "flex items-center gap-1 py-1.5 text-sm font-bold text-neutral-200 outline-none transition-colors duration-300 hover:text-gold data-popup-open:text-gold",
+                      active && "text-gold"
+                    )}
+                  >
+                    {group.label}
+                    <ChevronDown className="size-3.5 transition-transform duration-200 data-popup-open:rotate-180" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="min-w-48 border border-white/10 bg-ink-light p-1.5"
+                  >
+                    {group.items.map((item) => (
+                      <DropdownMenuItem
+                        key={item.href}
+                        className="rounded-md px-2 py-1.5 text-sm font-semibold text-neutral-200 focus:text-gold"
+                        render={<Link href={item.href}>{item.label}</Link>}
+                      />
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               );
             })}
           </nav>
@@ -109,7 +177,7 @@ export function LandingHeader() {
             <Button
               size="sm"
               nativeButton={false}
-              className="bg-gold px-4 text-ink hover:bg-gold/80"
+              className="bg-gold px-4 font-bold text-ink hover:bg-gold/80"
               render={<Link href="/login">{t.nav.loginSignup}</Link>}
             />
           </div>
@@ -133,25 +201,60 @@ export function LandingHeader() {
           <nav className="flex flex-col gap-1">
             {navLinks.map(({ href, label }) => {
               const active = isActive(href);
-              const className = cn(
-                "rounded-xl px-3 py-2 text-sm transition-colors",
-                active ? "text-gold" : "text-neutral-300 hover:bg-white/10 hover:text-white"
-              );
-              return href.startsWith("#") ? (
-                <a key={label} href={href} onClick={closeMobileMenu} className={className}>
-                  {label}
-                </a>
-              ) : (
-                <Link key={label} href={href} onClick={closeMobileMenu} className={className}>
+              return (
+                <Link
+                  key={label}
+                  href={href}
+                  onClick={closeMobileMenu}
+                  className={cn(
+                    "rounded-xl px-3 py-2 text-sm font-bold transition-colors",
+                    active ? "text-gold" : "text-neutral-200 hover:bg-white/10 hover:text-white"
+                  )}
+                >
                   {label}
                 </Link>
+              );
+            })}
+
+            {navGroups.map((group) => {
+              const expanded = openMobileGroup === group.label;
+              const active = isGroupActive(group);
+              return (
+                <div key={group.label}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenMobileGroup(expanded ? null : group.label)}
+                    aria-expanded={expanded}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-bold transition-colors",
+                      active ? "text-gold" : "text-neutral-200 hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    {group.label}
+                    <ChevronDown className={cn("size-4 transition-transform duration-200", expanded && "rotate-180")} />
+                  </button>
+                  {expanded && (
+                    <div className="ml-3 flex flex-col gap-0.5 border-l border-white/10 pl-3">
+                      {group.items.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={closeMobileMenu}
+                          className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-300 hover:bg-white/10 hover:text-white"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </nav>
           <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-3">
             <Button
               nativeButton={false}
-              className="bg-gold text-ink hover:bg-gold/80"
+              className="bg-gold font-bold text-ink hover:bg-gold/80"
               render={<Link href="/login">{t.nav.loginSignup}</Link>}
             />
           </div>

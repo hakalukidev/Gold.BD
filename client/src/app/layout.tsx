@@ -11,9 +11,11 @@ const manrope = Manrope({
 
 // Bangla body/UI font — Manrope has no Bengali glyphs, so this is the fallback
 // the --font-sans stack uses whenever the current locale renders Bangla copy.
+// Both weights are loaded (not just 400) so font-bold/font-semibold render a
+// real bold face for Bangla text instead of the browser faking it.
 const notoSerifBengali = Noto_Serif_Bengali({
   variable: "--font-noto-serif-bengali",
-  weight: "400",
+  weight: ["400", "700"],
   subsets: ["bengali"],
 });
 

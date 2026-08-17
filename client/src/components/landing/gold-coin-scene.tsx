@@ -1,6 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
+} from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Font, FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
@@ -234,13 +242,18 @@ function drawBangladeshDecal() {
 
 function useCoinMaterials() {
   return useMemo(() => {
-    const bevel = new THREE.MeshStandardMaterial({ color: "#f4c75a", metalness: 1, roughness: 0.13, side: THREE.DoubleSide });
-    const rim = new THREE.MeshStandardMaterial({ color: "#f7d072", metalness: 1, roughness: 0.1, side: THREE.DoubleSide });
-    const groove = new THREE.MeshStandardMaterial({ color: "#8e6415", metalness: 1, roughness: 0.38, side: THREE.DoubleSide });
-    const innerRing = new THREE.MeshStandardMaterial({ color: "#f2c24e", metalness: 1, roughness: 0.12, side: THREE.DoubleSide });
-    const face = new THREE.MeshStandardMaterial({ color: "#caa23a", metalness: 1, roughness: 0.26, side: THREE.DoubleSide });
-    const text = new THREE.MeshStandardMaterial({ color: "#fff2c9", metalness: 1, roughness: 0.15, side: THREE.DoubleSide });
-    const core = new THREE.MeshStandardMaterial({ color: "#d6a62a", metalness: 0.92, roughness: 0.18, side: THREE.DoubleSide });
+    // Metalness stays under 1 on every part: there's no env map to reflect
+    // (see the Canvas comment below on why <Environment> is avoided), and a
+    // pure metal with no environment reads pure black wherever it isn't
+    // catching a direct specular hit — which, once the coin is real bevelled
+    // geometry instead of one flat disc, is most of its surface.
+    const bevel = new THREE.MeshStandardMaterial({ color: "#f4c75a", metalness: 0.88, roughness: 0.18, side: THREE.DoubleSide });
+    const rim = new THREE.MeshStandardMaterial({ color: "#f7d072", metalness: 0.85, roughness: 0.15, side: THREE.DoubleSide });
+    const groove = new THREE.MeshStandardMaterial({ color: "#8e6415", metalness: 0.85, roughness: 0.4, side: THREE.DoubleSide });
+    const innerRing = new THREE.MeshStandardMaterial({ color: "#f2c24e", metalness: 0.88, roughness: 0.17, side: THREE.DoubleSide });
+    const face = new THREE.MeshStandardMaterial({ color: "#caa23a", metalness: 0.78, roughness: 0.28, side: THREE.DoubleSide });
+    const text = new THREE.MeshStandardMaterial({ color: "#fff2c9", metalness: 0.82, roughness: 0.2, side: THREE.DoubleSide });
+    const core = new THREE.MeshStandardMaterial({ color: "#d6a62a", metalness: 0.9, roughness: 0.2, side: THREE.DoubleSide });
 
     const decalTexture = new THREE.CanvasTexture(drawBangladeshDecal());
     decalTexture.colorSpace = THREE.SRGBColorSpace;
@@ -249,7 +262,7 @@ function useCoinMaterials() {
       map: decalTexture,
       transparent: true,
       alphaTest: 0.08,
-      metalness: 1,
+      metalness: 0.78,
       roughness: 0.28,
       side: THREE.DoubleSide,
     });
@@ -343,22 +356,41 @@ function buildCoinGroup(font: Font, materials: CoinMaterials) {
   return root;
 }
 
-// Resting pose the coin holds from the first frame: leaned back hard on the
-// X axis so the reeded edge reads clearly along the bottom-left rim — a
-// stable "leaning product shot" rather than a spin. Y and Z rotation never
-// change; the only rotation axis in play is X (base lean + cursor/scroll).
+// Resting pose the coin holds from the first frame: leaned back on the X
+// axis so the reeded edge reads clearly along the bottom-left rim, while it
+// continuously spins about the Y axis (the visible motion of a Y-axis spin
+// reads as travel along X, sweeping the obverse/reverse faces into view).
 const BASE_TILT_X = -0.62;
 const BASE_TILT_Z = -0.18;
+const SPIN_SPEED_INITIAL = 6; // radians / second, on first appearance
+const SPIN_SPEED_SETTLED = 0.6; // radians / second, once it's settled down
+const SPIN_SETTLE_RATE = 0.6; // how quickly the initial burst decays toward settled speed
+const MAX_FRAME_DELTA = 0.1; // clamp so a slow first frame (font/asset load) can't jump-cut the spin
+
+const DRAG_SPIN_SPEED = 0.012; // radians of Y rotation per pixel of horizontal drag
+const DRAG_TILT_SPEED = 0.006; // radians of X tilt offset per pixel of vertical drag
+const DRAG_TILT_LIMIT = 1.1; // clamp on how far vertical drag can tip the coin from its base lean
+
+export type DragState = {
+  dragging: boolean;
+  deltaX: number;
+  deltaY: number;
+};
 
 function Coin({
   hovered,
   scrollProgress,
+  drag,
 }: {
   hovered: boolean;
   scrollProgress: { current: number };
+  drag: RefObject<DragState>;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const scaleRef = useRef(1);
+  const spinSpeedRef = useRef(SPIN_SPEED_INITIAL);
+  const mountTimeRef = useRef<number | null>(null);
+  const dragTiltOffsetRef = useRef(0);
   const materials = useCoinMaterials();
   const font = useLoader(FontLoader, FONT_URL);
   const coin = useMemo(() => buildCoinGroup(font, materials), [font, materials]);
@@ -376,9 +408,44 @@ function Coin({
     const group = groupRef.current;
     if (!group) return;
 
-    // Coin holds its lean, nudged further by the cursor — X axis only.
-    const targetTiltX = BASE_TILT_X + THREE.MathUtils.clamp(-pointer.y, -1, 1) * 0.12;
+    // Drag input is collected off-frame (DOM pointer events) as raw pixel
+    // deltas; consume and clear it here so it reads as one frame's worth of
+    // motion regardless of how many pointermove events fired in between.
+    const dragState = drag.current;
+    const dragDeltaX = dragState?.deltaX ?? 0;
+    const dragDeltaY = dragState?.deltaY ?? 0;
+    if (dragState) {
+      dragState.deltaX = 0;
+      dragState.deltaY = 0;
+    }
+    dragTiltOffsetRef.current = THREE.MathUtils.clamp(
+      dragTiltOffsetRef.current + dragDeltaY * DRAG_TILT_SPEED,
+      -DRAG_TILT_LIMIT,
+      DRAG_TILT_LIMIT
+    );
+
+    // Coin holds its lean, nudged further by the cursor and by any vertical
+    // drag the user has applied — X axis only.
+    const targetTiltX =
+      BASE_TILT_X + THREE.MathUtils.clamp(-pointer.y, -1, 1) * 0.12 + dragTiltOffsetRef.current;
     group.rotation.x = THREE.MathUtils.lerp(group.rotation.x, targetTiltX, 0.06);
+
+    // Continuous spin about the Y axis — starts fast on first appearance,
+    // then eases down to its settled speed. Timed off elapsed-since-mount
+    // (not raw delta) because the first frame after Suspense/font load can
+    // report a large delta and would otherwise skip the fast-spin intro.
+    if (mountTimeRef.current === null) mountTimeRef.current = state.clock.elapsedTime;
+    const sinceMount = state.clock.elapsedTime - mountTimeRef.current;
+    spinSpeedRef.current =
+      SPIN_SPEED_SETTLED + (SPIN_SPEED_INITIAL - SPIN_SPEED_SETTLED) * Math.exp(-SPIN_SETTLE_RATE * sinceMount);
+
+    if (dragState?.dragging) {
+      // While dragging, horizontal movement drives rotation directly instead
+      // of the ambient auto-spin.
+      group.rotation.y += dragDeltaX * DRAG_SPIN_SPEED;
+    } else {
+      group.rotation.y += Math.min(delta, MAX_FRAME_DELTA) * spinSpeedRef.current;
+    }
 
     // Hover bump.
     scaleRef.current = THREE.MathUtils.lerp(scaleRef.current, hovered ? 1.1 : 1, 0.1);
@@ -423,14 +490,49 @@ function useScrollProgress(containerRef: React.RefObject<HTMLDivElement | null>)
 export default function GoldCoinScene() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const scrollProgress = useScrollProgress(containerRef);
+  const dragRef = useRef<DragState>({ dragging: false, deltaX: 0, deltaY: 0 });
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current.dragging = true;
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
+    setIsDragging(true);
+  };
+
+  const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current.dragging || !lastPointerRef.current) return;
+    dragRef.current.deltaX += e.clientX - lastPointerRef.current.x;
+    dragRef.current.deltaY += e.clientY - lastPointerRef.current.y;
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const endDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    dragRef.current.dragging = false;
+    lastPointerRef.current = null;
+    setIsDragging(false);
+  };
 
   return (
     <div
       ref={containerRef}
-      className="relative mx-auto aspect-square w-full select-none"
+      className={`relative mx-auto aspect-square w-full select-none touch-none ${
+        isDragging ? "cursor-grabbing" : "cursor-grab"
+      }`}
       onPointerEnter={() => setHovered(true)}
-      onPointerLeave={() => setHovered(false)}
+      onPointerLeave={(e) => {
+        setHovered(false);
+        endDrag(e);
+      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
     >
       <Canvas
         camera={{ position: [0, 0, 4.3], fov: 32 }}
@@ -438,14 +540,14 @@ export default function GoldCoinScene() {
         gl={{ antialias: true, alpha: true }}
       >
         {/* No drei <Environment>: its PMREM step crashes on software-rendered GPUs and fetches an HDR from a CDN. */}
-        <ambientLight intensity={0.95} color="#6b5426" />
+        <ambientLight intensity={1.35} color="#6b5426" />
         <directionalLight position={[3, 4, 3]} intensity={2.9} color="#fff2d2" />
-        <directionalLight position={[-3, 1, 2]} intensity={1.2} color="#ffe9b8" />
+        <directionalLight position={[-3, 1, 2]} intensity={1.4} color="#ffe9b8" />
         <directionalLight position={[-2, -3, -2]} intensity={0.6} color="#4a3b1f" />
         {/* Fill light from below — the coin's steep lean exposes the underside of
             its reeded edge, which every other light in this rig sits above. Without
             this it renders pure black and reads as if the coin's been clipped. */}
-        <directionalLight position={[0, -4, 2.5]} intensity={1.4} color="#c99a3f" />
+        <directionalLight position={[0, -4, 2.5]} intensity={1.7} color="#c99a3f" />
         <pointLight position={[0, 0, 3]} intensity={0.7} color="#fff6dd" />
         {/* Tight hot highlight riding the upper-right rim — this is what reads as the "flare" streak on the coin's edge. */}
         <pointLight position={[1.8, 1.6, 2.2]} intensity={3.6} distance={6} decay={2} color="#fff9e6" />
@@ -458,7 +560,7 @@ export default function GoldCoinScene() {
           color="#ffe9a8"
         />
         <Suspense fallback={null}>
-          <Coin hovered={hovered} scrollProgress={scrollProgress} />
+          <Coin hovered={hovered} scrollProgress={scrollProgress} drag={dragRef} />
         </Suspense>
       </Canvas>
     </div>

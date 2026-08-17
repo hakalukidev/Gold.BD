@@ -72,9 +72,9 @@ export function GoldPriceTicker() {
   const items = TICKER_DATA[locale];
 
   return (
-    <div className="relative w-full overflow-hidden border-b border-[#f5d778]/30 bg-linear-to-r from-[#5b3a08] via-[#8b6416] to-[#c7922a]">
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-linear-to-r from-[#5b3a08] to-transparent sm:w-16" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-linear-to-l from-[#5b3a08] to-transparent sm:w-16" />
+    <div className="relative w-full overflow-hidden border-b border-[#e4e6ea]/30 bg-linear-to-r from-[#5a5f66] via-[#9aa0a8] to-[#c7ccd1]">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-linear-to-r from-[#5a5f66] to-transparent sm:w-16" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-linear-to-l from-[#5a5f66] to-transparent sm:w-16" />
       <div className="flex w-max animate-[ticker-scroll_35s_linear_infinite] hover:[animation-play-state:paused]">
         <TickerRow items={items} />
         <TickerRow items={items} />

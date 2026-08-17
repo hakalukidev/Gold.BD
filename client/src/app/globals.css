@@ -13,15 +13,9 @@
   --color-gold-light: #e8c66a;
   --color-gold-bright: #f4c64e;
   --color-gold-champagne: #e8c66a;
-  --color-ink: #030303;
+  --color-ink: #000000;
   --color-ink-light: #0d0d0d;
   --color-muted-white: #a5a5a5;
-
-  /* A soft, warm counterpoint used only in BrandStorySection — an elegant
-     "light" interlude between the dark bands, echoing the gold ramp above. */
-  --color-cream: #f7f1e6;
-  --color-cream-deep: #ece0c7;
-  --color-blush: #f3e3dd;
 }
 
 @theme inline {
@@ -30,7 +24,6 @@
   --font-sans: var(--font-manrope), var(--font-noto-serif-bengali), sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
-  --font-script: var(--font-script);
   --font-display: var(--font-playfair), var(--font-noto-serif-bengali), sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);

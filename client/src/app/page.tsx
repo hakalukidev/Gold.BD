@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useT } from "@/lib/i18n/use-t";
 import { LandingHeader } from "@/components/landing/landing-header";
+import { StatusStrip } from "@/components/landing/status-strip";
 import { GoldPriceTicker } from "@/components/landing/gold-price-ticker";
 import { HeroSection } from "@/components/landing/hero-section";
-import { BrandStorySection } from "@/components/landing/brand-story-section";
+import { TodayPriceSection } from "@/components/landing/today-price-section";
 import { WhySection } from "@/components/landing/why-section";
 import { RateHistorySection } from "@/components/landing/rate-history-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
@@ -23,10 +24,11 @@ export default function LandingPage() {
     <main className="flex flex-1 flex-col">
       <GoldPriceTicker />
       <LandingHeader />
+      <StatusStrip />
 
       <HeroSection />
+      <TodayPriceSection />
 
-      <BrandStorySection />
       <WhySection />
       <RateHistorySection />
 

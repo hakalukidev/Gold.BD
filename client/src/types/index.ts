@@ -35,6 +35,9 @@ export interface GoldRateSummary {
   effectiveAt: string;
 }
 
+/** Gold and silver rates cross the wire in the same shape. */
+export type MetalRateSummary = GoldRateSummary;
+
 /** Standard envelope returned by every /api/* route. */
 export type ApiResponse<T> =
   | { success: true; data: T }

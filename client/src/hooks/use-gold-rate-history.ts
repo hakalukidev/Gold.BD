@@ -1,13 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import type { GoldRateSummary } from "@/types";
+import { useMetalRateHistory } from "@/hooks/use-metal-rate";
 
+/** Gold-only convenience wrapper — see use-metal-rate.ts for the shared query. */
 export function useGoldRateHistory() {
-  return useQuery({
-    queryKey: ["gold-rate-history"],
-    queryFn: () => api.get<GoldRateSummary[]>("/api/gold/rate-history"),
-    staleTime: 60_000,
-  });
+  return useMetalRateHistory("gold");
 }

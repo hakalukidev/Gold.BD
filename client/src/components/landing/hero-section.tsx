@@ -40,7 +40,7 @@ export function HeroSection() {
 
   return (
     <div
-      className="relative flex h-[calc(100vh-5rem)] min-h-[calc(100vh-5rem)] flex-col overflow-hidden bg-black"
+      className="relative flex min-h-[calc(100vh-5rem)] flex-col overflow-hidden bg-black"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -51,19 +51,19 @@ export function HeroSection() {
         className="pointer-events-none absolute inset-0 bg-[url('/hero_background.png')] bg-cover bg-bottom-right bg-no-repeat opacity-90"
       />
 
-      <section className="relative flex flex-1 flex-col justify-center-safe overflow-y-auto">
-        <div className="relative mx-auto grid w-full max-w-6xl place-items-center gap-5 px-4 py-4 sm:px-6 lg:grid-cols-2 lg:gap-6 lg:px-8">
+      <section className="relative flex flex-1 flex-col justify-center-safe">
+        <div className="relative mx-auto grid w-full max-w-6xl place-items-center gap-5 px-4 py-8 sm:px-8 sm:py-10 lg:grid-cols-2 lg:gap-6 lg:px-10 lg:py-14">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="min-w-0 space-y-3 text-center lg:text-left"
+            className="min-w-0  text-center lg:text-left"
           >
-            <p className="font-display text-xs font-semibold tracking-[0.2em] text-white uppercase sm:text-sm">
+            <p className=" text-base font-semibold tracking-[0.2em] text-white uppercase sm:text-xl">
               {t.hero.eyebrow}
             </p>
 
-            <h1 className="font-display text-3xl leading-[1.15] font-bold tracking-tight text-gold uppercase sm:text-4xl lg:text-[44px]">
+            <h1 className="font-sans text-5xl leading-[1] font-bold tracking-tight text-gold uppercase sm:text-6xl lg:text-[64px]">
               {t.hero.headingLine1}
               <br />
               {t.hero.headingLine2Before}
@@ -71,27 +71,31 @@ export function HeroSection() {
               {t.hero.headingLine2After}
             </h1>
 
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-1 lg:justify-start">
+            <div className="flex flex-wrap items-center my-5 justify-center gap-y-2 pt-1 lg:justify-start">
               {t.hero.highlights.map((highlight, i) => {
                 const Icon = HIGHLIGHT_ICONS[i];
                 return (
-                  <div key={highlight.label} className="flex items-center gap-2">
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-gold/40 text-gold">
-                      <Icon className="size-3.5" strokeWidth={2} />
-                    </span>
-                    <span className="text-[11px] font-semibold tracking-wide text-neutral-200 uppercase sm:text-xs">
-                      {highlight.label}
-                    </span>
+                  <div key={highlight.label} className="flex items-center">
+                    {i > 0 && <span aria-hidden="true" className="mx-4 h-9 w-px shrink-0 bg-white/15 sm:mx-5" />}
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex size-11 shrink-0 items-center justify-center text-gold">
+                        <Icon className="size-8" strokeWidth={1.75} />
+                      </span>
+                      <span className="max-w-16 text-[9px] leading-tight font-semibold tracking-wide text-neutral-200 uppercase sm:max-w-20 sm:text-[10px]">
+                        {highlight.label}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
             </div>
 
-            <div className="flex flex-col items-center gap-3 pt-1 sm:flex-row lg:justify-start">
+            <div className="flex flex-col  items-center gap-3 pt-1 sm:flex-row lg:justify-start">
               <Button
                 size="lg"
+                variant="gold-solid"
                 nativeButton={false}
-                className="btn-gold-shine h-12 w-full gap-2 px-6 text-sm uppercase shadow-[0_0_30px_rgba(212,166,42,0.2)] transition-transform duration-300 hover:-translate-y-0.5 sm:w-auto"
+                className="h-12 w-full gap-2 px-6 text-sm sm:w-auto"
                 render={
                   <Link href="/register">
                     <ShoppingBag className="size-4" />
@@ -101,9 +105,9 @@ export function HeroSection() {
               />
               <Button
                 size="lg"
-                variant="outline"
+                variant="gold-outline"
                 nativeButton={false}
-                className="h-12 w-full gap-2 border-gold/50 bg-transparent px-6 text-sm uppercase text-gold transition-all duration-300 hover:-translate-y-0.5 hover:bg-gold hover:text-ink hover:shadow-[0_0_30px_rgba(212,166,42,0.3)] sm:w-auto"
+                className="h-12 w-full gap-2 px-6 text-sm sm:w-auto"
                 render={
                   <a href="#rate-history">
                     {t.hero.ctaSecondary}
@@ -133,7 +137,7 @@ export function HeroSection() {
         </div>
 
         {/* ---------- Trust features panel ---------- */}
-        <div className="relative mx-auto w-full max-w-6xl px-4 pb-4 sm:px-6 lg:px-8 lg:pb-6">
+        <div className="relative mx-auto w-full max-w-6xl px-4 pb-6 sm:px-8 sm:pb-8 lg:px-10 lg:pb-10">
           <div className="flex rounded-md border border-gold/20 bg-white/3 px-4 py-3 backdrop-blur-sm">
             <TrustFeatures />
           </div>

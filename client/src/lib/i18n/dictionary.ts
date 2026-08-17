@@ -33,10 +33,10 @@ const dictionary = {
     },
     hero: {
       eyebrow: "বাংলাদেশের বিশ্বস্ত",
-      headingLine1: "কিনুন ২২ক্যারেট ও ২৪ক্যারেট",
+      headingLine1: "গোল্ড সেলিং",
       headingLine2Before: "",
-      headingLine2Gold: "গোল্ড",
-      headingLine2After: " অনলাইনে, বাংলাদেশজুড়ে",
+      headingLine2Gold: "প্ল্যাটফর্ম",
+      headingLine2After: "",
       highlights: [
         { label: "১০০% খাঁটি গোল্ড" },
         { label: "বিশ্বস্ত ও নিরাপদ" },
@@ -199,10 +199,10 @@ const dictionary = {
     },
     hero: {
       eyebrow: "Bangladesh's Trusted ",
-      headingLine1: "Buy 22K & 24K",
+      headingLine1: "Gold Selling",
       headingLine2Before: "",
-      headingLine2Gold: "Gold",
-      headingLine2After: " Online in Bangladesh",
+      headingLine2Gold: "Platform",
+      headingLine2After: "",
       highlights: [
         { label: "100% Pure Gold" },
         { label: "Trusted & Secure" },

@@ -65,8 +65,8 @@ export default function LandingPage() {
           <p className="max-w-md text-sm text-muted-foreground">{t.ctaBand.body}</p>
           <Button
             size="lg"
+            variant="gold"
             nativeButton={false}
-            className="btn-gold-shine"
             render={<Link href="/register">{t.ctaBand.cta}</Link>}
           />
         </div>

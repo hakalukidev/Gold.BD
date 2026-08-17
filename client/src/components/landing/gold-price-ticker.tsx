@@ -51,7 +51,8 @@ function TickerRow({ items }: { items: TickerItem[] }) {
                 "text-[10px] font-medium",
                 item.metaTone === "down" && "text-red-400",
                 item.metaTone === "up" && "text-emerald-400",
-                (!item.metaTone || item.metaTone === "neutral") && "text-gold/80"
+                (!item.metaTone || item.metaTone === "neutral") &&
+                  (item.meta === "BAJUS" || item.meta?.includes("%") ? "text-black" : "text-gold/80")
               )}
             >
               {item.meta}

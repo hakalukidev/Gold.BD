@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Phone, Gem } from "lucide-react";
+import { Menu, X, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setMobileMenuOpen, toggleMobileMenu, setLocale, type Locale } from "@/store/slices/ui-slice";
 import { useT } from "@/lib/i18n/use-t";
 import { cn } from "@/lib/utils";
-
-const SUPPORT_PHONE = "+880 1700 000000";
 
 function LanguageToggle({ className }: { className?: string }) {
   const locale = useAppSelector((state) => state.ui.locale);
@@ -107,18 +105,11 @@ export function LandingHeader() {
           </nav>
 
           <div className="hidden items-center gap-4 lg:flex">
-            <a
-              href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`}
-              className="flex items-center gap-2 text-sm text-neutral-300 transition-colors hover:text-gold"
-            >
-              <Phone className="size-4 text-gold" />
-              {SUPPORT_PHONE}
-            </a>
             <LanguageToggle />
             <Button
               size="sm"
               nativeButton={false}
-              className="rounded-[11px] bg-gold px-4 font-semibold tracking-wide text-ink uppercase shadow-[0_0_18px_rgba(212,166,42,0.25)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-gold-bright hover:shadow-[0_0_26px_rgba(212,166,42,0.4)]"
+              className="bg-gold px-4 text-ink hover:bg-gold/80"
               render={<Link href="/login">{t.nav.loginSignup}</Link>}
             />
           </div>
@@ -158,16 +149,9 @@ export function LandingHeader() {
             })}
           </nav>
           <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-3">
-            <a
-              href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`}
-              className="flex items-center gap-2 px-3 text-sm text-neutral-300"
-            >
-              <Phone className="size-4 text-gold" />
-              {SUPPORT_PHONE}
-            </a>
             <Button
               nativeButton={false}
-              className="rounded-[11px] bg-gold font-semibold tracking-wide text-ink uppercase hover:bg-gold-bright"
+              className="bg-gold text-ink hover:bg-gold/80"
               render={<Link href="/login">{t.nav.loginSignup}</Link>}
             />
           </div>

@@ -1,10 +1,10 @@
 "use client";
 
-import { Gem, Lock, Undo2 } from "lucide-react";
+import { Gem, Lock, RotateCcw } from "lucide-react";
 import { useT } from "@/lib/i18n/use-t";
 import { BangladeshMapIcon } from "./bangladesh-map-icon";
 
-const ICONS = [BangladeshMapIcon, Gem, Undo2, Lock] as const;
+const ICONS = [BangladeshMapIcon, Gem, RotateCcw, Lock] as const;
 
 export function TrustFeatures() {
   const t = useT();

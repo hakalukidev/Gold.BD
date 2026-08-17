@@ -229,11 +229,11 @@ export function RateHistorySection() {
           </div>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <Button nativeButton={false} className="bg-gold text-ink hover:bg-gold-light sm:w-auto" render={<Link href="/register">{t.rateHistory.buyGold}</Link>} />
+            <Button variant="gold" nativeButton={false} className="sm:w-auto" render={<Link href="/register">{t.rateHistory.buyGold}</Link>} />
             <Button
-              variant="outline"
+              variant="gold-outline"
               nativeButton={false}
-              className="border-white/20 bg-transparent text-white hover:bg-white/10 sm:w-auto"
+              className="sm:w-auto"
               render={<a href="#how-it-works">{t.rateHistory.learnMore}</a>}
             />
           </div>

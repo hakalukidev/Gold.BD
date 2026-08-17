@@ -177,7 +177,8 @@
   background: linear-gradient(180deg, #fff0b3 0%, #efc247 40%, #b3811c 75%, #9a6b12 100%);
 }
 
-.btn-gold-shine::after {
+.btn-gold-shine::after,
+.btn-gold-shine-sweep::after {
   content: "";
   position: absolute;
   top: 0;
@@ -189,8 +190,14 @@
   animation: gold-shine-sweep 2.6s ease-in-out infinite;
 }
 
+.btn-gold-shine-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .btn-gold-shine::after {
+  .btn-gold-shine::after,
+  .btn-gold-shine-sweep::after {
     animation: none;
   }
 }

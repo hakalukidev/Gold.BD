@@ -175,10 +175,11 @@ export function LandingHeader() {
           <div className="hidden items-center gap-4 lg:flex">
             <LanguageToggle />
             <Button
-              size="sm"
+              variant="gold-solid"
+              size="default"
               nativeButton={false}
-              className="bg-gold px-4 font-bold text-ink hover:bg-gold/80"
-              render={<Link href="/login">{t.nav.loginSignup}</Link>}
+              className="h-10 px-5 text-xs font-bold tracking-[0.08em] shadow-[0_0_18px_rgba(212,166,42,0.25)]"
+              render={<Link href="/buy-gold">{t.rateHistory.buyGold}</Link>}
             />
           </div>
 
@@ -253,9 +254,16 @@ export function LandingHeader() {
           </nav>
           <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-3">
             <Button
+              variant="gold"
+              size="lg"
               nativeButton={false}
-              className="bg-gold font-bold text-ink hover:bg-gold/80"
-              render={<Link href="/login">{t.nav.loginSignup}</Link>}
+              className="w-full shadow-none"
+              style={{ boxShadow: "none" }}
+              render={
+                <Link href="/buy-gold" onClick={closeMobileMenu}>
+                  {t.rateHistory.buyGold}
+                </Link>
+              }
             />
           </div>
         </div>

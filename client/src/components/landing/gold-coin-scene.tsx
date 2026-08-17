@@ -1,18 +1,198 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { Font, FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import { BANGLADESH_DIVISIONS, BANGLADESH_SVG_HEIGHT, BANGLADESH_SVG_WIDTH } from "./bangladesh-geo";
 
-// Engraves the real division outlines as a raised gold relief: a dark sunken
-// shadow (light from the top-left, same as the rest of the coin face) under a
-// metallic gradient fill, with a bright rim on the lit edge to sell the emboss.
-function drawBangladeshMap(ctx: CanvasRenderingContext2D, cx: number, cy: number, targetHeight: number) {
-  const scale = targetHeight / BANGLADESH_SVG_HEIGHT;
+const FONT_URL = "/fonts/gentilis_bold.typeface.json";
+
+// --- Coin proportions -------------------------------------------------
+// Everything below is real geometry (extruded rings, bevels, embossed
+// letters, a reeded edge) rather than a flat disc with a painted texture.
+// All radii are fractions of the outer ridge radius (1); all depths are
+// authored "outward" along local +Z, then the obverse/reverse assemblies
+// are placed and mirrored so +Z always points toward whichever camera side
+// is looking at that face.
+
+const CORE_DEPTH = 0.3; // overall coin thickness (core drum + ridges)
+const RIDGE_OUT = 1.0;
+const RIDGE_IN = 0.975;
+const RIDGE_COUNT = 90;
+
+const BEVEL_OUT = RIDGE_IN;
+const BEVEL_IN = 0.9;
+const BEVEL_DEPTH = 0.02;
+
+const RIM_OUT = BEVEL_IN;
+const RIM_IN = 0.79;
+const RIM_DEPTH = 0.026;
+
+const GROOVE_OUT = RIM_IN;
+const GROOVE_IN = 0.745;
+const GROOVE_DEPTH = 0.012;
+const GROOVE_Z = -0.016;
+
+const RING_OUT = GROOVE_IN;
+const RING_IN = 0.66;
+const RING_DEPTH = 0.03;
+
+const FACE_R = RING_IN;
+const FACE_DEPTH = 0.012;
+const FACE_Z = -0.006;
+const FACE_TOP = FACE_Z + FACE_DEPTH;
+
+// --- Small geometry builders -------------------------------------------
+
+function makeAnnulusGeometry(
+  outerR: number,
+  innerR: number,
+  depth: number,
+  bevel?: { thickness: number; size: number }
+) {
+  const shape = new THREE.Shape();
+  shape.absarc(0, 0, outerR, 0, Math.PI * 2, false);
+  const hole = new THREE.Path();
+  hole.absarc(0, 0, innerR, 0, Math.PI * 2, true);
+  shape.holes.push(hole);
+  return new THREE.ExtrudeGeometry(shape, {
+    depth,
+    curveSegments: 96,
+    bevelEnabled: !!bevel,
+    bevelThickness: bevel?.thickness ?? 0,
+    bevelSize: bevel?.size ?? 0,
+    bevelSegments: 2,
+  });
+}
+
+function makeDiscGeometry(radius: number, depth: number) {
+  const shape = new THREE.Shape();
+  shape.absarc(0, 0, radius, 0, Math.PI * 2, false);
+  return new THREE.ExtrudeGeometry(shape, { depth, curveSegments: 96, bevelEnabled: false });
+}
+
+// The coin's core + edge in one piece: a filled disc whose perimeter
+// zigzags between RIDGE_OUT/RIDGE_IN so the reeded edge is real geometry
+// (its facets catch light as the coin turns) instead of a striped texture.
+function makeRidgedCoreGeometry(depth: number) {
+  const shape = new THREE.Shape();
+  const totalPoints = RIDGE_COUNT * 2;
+  for (let i = 0; i <= totalPoints; i++) {
+    const angle = (i / totalPoints) * Math.PI * 2;
+    const r = i % 2 === 0 ? RIDGE_OUT : RIDGE_IN;
+    const x = Math.cos(angle) * r;
+    const y = Math.sin(angle) * r;
+    if (i === 0) shape.moveTo(x, y);
+    else shape.lineTo(x, y);
+  }
+  return new THREE.ExtrudeGeometry(shape, { depth, curveSegments: 1, bevelEnabled: false });
+}
+
+function centerGeometryXY(geo: THREE.BufferGeometry) {
+  geo.computeBoundingBox();
+  const box = geo.boundingBox!;
+  geo.translate(-(box.max.x + box.min.x) / 2, -(box.max.y + box.min.y) / 2, 0);
+  return geo;
+}
+
+function buildStraightTextMesh(
+  font: Font,
+  text: string,
+  size: number,
+  depth: number,
+  material: THREE.Material,
+  position: [number, number, number]
+) {
+  const geo = new TextGeometry(text, {
+    font,
+    size,
+    depth,
+    curveSegments: 8,
+    bevelEnabled: true,
+    bevelThickness: depth * 0.35,
+    bevelSize: depth * 0.25,
+    bevelSegments: 2,
+  });
+  centerGeometryXY(geo);
+  const mesh = new THREE.Mesh(geo, material);
+  mesh.position.set(...position);
+  return mesh;
+}
+
+// Letters are arced along `radius` with their baseline sitting on the
+// circle and cap-height pointing outward — the standard minted rim-text
+// look, built from real per-letter extruded geometry (not a canvas arc).
+function buildArcTextGroup(
+  font: Font,
+  text: string,
+  radius: number,
+  size: number,
+  depth: number,
+  material: THREE.Material,
+  letterSpacing: number
+) {
+  const group = new THREE.Group();
+  const chars = [...text];
+
+  const widths = chars.map((c) => {
+    if (c === " ") return size * 0.55 + letterSpacing;
+    const geo = new TextGeometry(c, { font, size, depth, curveSegments: 6, bevelEnabled: false });
+    geo.computeBoundingBox();
+    const w = geo.boundingBox!.max.x - geo.boundingBox!.min.x;
+    geo.dispose();
+    return w + letterSpacing;
+  });
+
+  const totalAngle = widths.reduce((sum, w) => sum + w / radius, 0);
+  let angle = -totalAngle / 2;
+
+  chars.forEach((c, i) => {
+    const charAngle = widths[i] / radius;
+    angle += charAngle / 2;
+    if (c !== " ") {
+      const geo = new TextGeometry(c, {
+        font,
+        size,
+        depth,
+        curveSegments: 6,
+        bevelEnabled: true,
+        bevelThickness: depth * 0.35,
+        bevelSize: depth * 0.22,
+        bevelSegments: 2,
+      });
+      geo.computeBoundingBox();
+      const box = geo.boundingBox!;
+      geo.translate(-(box.max.x + box.min.x) / 2, 0, 0);
+      const mesh = new THREE.Mesh(geo, material);
+      mesh.position.set(Math.sin(angle) * radius, Math.cos(angle) * radius, 0);
+      mesh.rotation.z = -angle;
+      group.add(mesh);
+    }
+    angle += charAngle / 2;
+  });
+
+  return group;
+}
+
+// Reverse-face decal: the Bangladesh division outlines as a raised gold
+// relief, drawn to a transparent canvas and layered as an alpha-masked
+// plane in front of the plain reverse face plate (an SVG-accurate map is
+// too fine a detail to justify modeling as extruded geometry).
+function drawBangladeshDecal() {
+  const size = 512;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+
+  const scale = (size * 0.62) / BANGLADESH_SVG_HEIGHT;
   const targetWidth = BANGLADESH_SVG_WIDTH * scale;
-  const originX = cx - targetWidth / 2;
-  const originY = cy - targetHeight / 2;
+  const targetHeight = BANGLADESH_SVG_HEIGHT * scale;
+  const originX = size / 2 - targetWidth / 2;
+  const originY = size / 2 - targetHeight / 2 - size * 0.03;
 
   const paths = BANGLADESH_DIVISIONS.map(({ d }) => new Path2D(d));
 
@@ -20,14 +200,12 @@ function drawBangladeshMap(ctx: CanvasRenderingContext2D, cx: number, cy: number
   ctx.translate(originX, originY);
   ctx.scale(scale, scale);
 
-  // Sunken shadow, offset a couple of device pixels down-right regardless of scale.
   ctx.save();
   ctx.translate(2.5 / scale, 2.5 / scale);
   ctx.fillStyle = "rgba(60, 40, 12, 0.55)";
   paths.forEach((p) => ctx.fill(p));
   ctx.restore();
 
-  // Raised gold face, lit from the same top-left direction as the coin's rim.
   const gradient = ctx.createLinearGradient(0, 0, BANGLADESH_SVG_WIDTH, BANGLADESH_SVG_HEIGHT);
   gradient.addColorStop(0, "#fdf0c4");
   gradient.addColorStop(0.45, "#e3b969");
@@ -41,7 +219,6 @@ function drawBangladeshMap(ctx: CanvasRenderingContext2D, cx: number, cy: number
     ctx.stroke(p);
   });
 
-  // Bright emboss rim along the lit (top-left) edge of the whole landmass.
   ctx.save();
   ctx.translate(-1.2 / scale, -1.2 / scale);
   ctx.strokeStyle = "rgba(255, 247, 217, 0.65)";
@@ -50,238 +227,120 @@ function drawBangladeshMap(ctx: CanvasRenderingContext2D, cx: number, cy: number
   ctx.restore();
 
   ctx.restore();
-}
-
-// Draws `text` curved along an arc so letters sit upright relative to the
-// radius (top of each letter pointing outward) — the standard "coin rim
-// engraving" look, used for "PURE GOLD" arcing over the top of the face.
-// `centerAngle` of 0 centers the arc at the top of the circle.
-function drawArcText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  cx: number,
-  cy: number,
-  radius: number,
-  centerAngle: number,
-  font: string,
-  color: string,
-  letterSpacing: number
-) {
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(centerAngle);
-  ctx.font = font;
-  ctx.fillStyle = color;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  const chars = [...text];
-  const widths = chars.map((c) => ctx.measureText(c).width + letterSpacing);
-  const totalAngle = widths.reduce((sum, w) => sum + w / radius, 0);
-  let angle = -totalAngle / 2;
-
-  for (let i = 0; i < chars.length; i++) {
-    const charAngle = widths[i] / radius;
-    angle += charAngle / 2;
-    ctx.save();
-    ctx.rotate(angle);
-    ctx.translate(0, -radius);
-    ctx.fillText(chars[i], 0, 0);
-    ctx.restore();
-    angle += charAngle / 2;
-  }
-
-  ctx.restore();
-}
-
-// No .glb asset — the engraving is a canvas texture mapped onto the cylinder's cap faces.
-function drawCoinFace() {
-  const size = 512;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return canvas;
-
-  const cx = size / 2;
-  const cy = size / 2;
-
-  const base = ctx.createRadialGradient(cx, cy, size * 0.05, cx, cy, size * 0.5);
-  base.addColorStop(0, "#ffe6a0");
-  base.addColorStop(0.5, "#f0b83f");
-  base.addColorStop(1, "#b87800");
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, size, size);
-
-  ctx.strokeStyle = "#b87800";
-  ctx.lineWidth = 12;
-  ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.46, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.strokeStyle = "#ffe6a0";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.43, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.fillStyle = "#b87800";
-  const dots = 60;
-  for (let i = 0; i < dots; i++) {
-    const angle = (i / dots) * Math.PI * 2;
-    const r = size * 0.39;
-    ctx.beginPath();
-    ctx.arc(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r, 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  ctx.strokeStyle = "#b87800";
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.29, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // "PURE GOLD" arcs along the inside of the dotted rim, like a mint's rim engraving.
-  drawArcText(
-    ctx,
-    "PURE GOLD",
-    cx,
-    cy,
-    size * 0.345,
-    0,
-    "700 26px Georgia, 'Noto Serif Bengali', serif",
-    "#402000",
-    3
-  );
-
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#402000";
-  ctx.font = "800 108px Georgia, 'Noto Serif Bengali', serif";
-  ctx.fillText("24K", cx, cy - 20);
-  ctx.font = "700 46px Georgia, 'Noto Serif Bengali', serif";
-  ctx.fillText("GOLD", cx, cy + 52);
-  ctx.fillStyle = "#402000";
-  ctx.font = "600 24px Georgia, 'Noto Serif Bengali', serif";
-  ctx.fillText("999.9", cx, cy + 108);
-
   return canvas;
 }
 
-// Reverse face: the obverse's branding swapped out for an engraved Bangladesh
-// map, since a coin only needs the country's outline on one side.
-function drawCoinFaceMap() {
-  const size = 512;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return canvas;
-
-  const cx = size / 2;
-  const cy = size / 2;
-
-  const base = ctx.createRadialGradient(cx, cy, size * 0.05, cx, cy, size * 0.5);
-  base.addColorStop(0, "#ffe6a0");
-  base.addColorStop(0.5, "#f0b83f");
-  base.addColorStop(1, "#b87800");
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, size, size);
-
-  ctx.strokeStyle = "#b87800";
-  ctx.lineWidth = 12;
-  ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.46, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.strokeStyle = "#ffe6a0";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.43, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.fillStyle = "#b87800";
-  const dots = 60;
-  for (let i = 0; i < dots; i++) {
-    const angle = (i / dots) * Math.PI * 2;
-    const r = size * 0.39;
-    ctx.beginPath();
-    ctx.arc(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r, 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  drawBangladeshMap(ctx, cx, cy - size * 0.05, size * 0.5);
-
-  ctx.fillStyle = "#402000";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = "700 24px Georgia, 'Noto Serif Bengali', serif";
-  ctx.fillText("BANGLADESH", cx, cy + size * 0.35);
-
-  return canvas;
-}
-
-function drawCoinEdge() {
-  const w = 256;
-  const h = 32;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return canvas;
-
-  const gradient = ctx.createLinearGradient(0, 0, 0, h);
-  gradient.addColorStop(0, "#b87800");
-  gradient.addColorStop(0.5, "#ffd66a");
-  gradient.addColorStop(1, "#8a5c00");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, w, h);
-
-  // Reeded edge: each groove pairs a near-black shadow with a hot highlight
-  // right next to it, so the ribs read as raised metal rather than flat
-  // stripes — deliberately high-contrast since the edge band is thin on screen.
-  const ridgeSpacing = 9;
-  for (let x = 0; x < w; x += ridgeSpacing) {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-    ctx.fillRect(x, 0, 3, h);
-    ctx.fillStyle = "rgba(255, 250, 224, 0.85)";
-    ctx.fillRect(x + 3, 0, 2.5, h);
-  }
-
-  return canvas;
-}
+// --- Materials -----------------------------------------------------------
 
 function useCoinMaterials() {
   return useMemo(() => {
-    const toTexture = (canvas: HTMLCanvasElement) => {
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.anisotropy = 8;
-      return texture;
-    };
+    const bevel = new THREE.MeshStandardMaterial({ color: "#f4c75a", metalness: 1, roughness: 0.13, side: THREE.DoubleSide });
+    const rim = new THREE.MeshStandardMaterial({ color: "#f7d072", metalness: 1, roughness: 0.1, side: THREE.DoubleSide });
+    const groove = new THREE.MeshStandardMaterial({ color: "#8e6415", metalness: 1, roughness: 0.38, side: THREE.DoubleSide });
+    const innerRing = new THREE.MeshStandardMaterial({ color: "#f2c24e", metalness: 1, roughness: 0.12, side: THREE.DoubleSide });
+    const face = new THREE.MeshStandardMaterial({ color: "#caa23a", metalness: 1, roughness: 0.26, side: THREE.DoubleSide });
+    const text = new THREE.MeshStandardMaterial({ color: "#fff2c9", metalness: 1, roughness: 0.15, side: THREE.DoubleSide });
+    const core = new THREE.MeshStandardMaterial({ color: "#d6a62a", metalness: 0.92, roughness: 0.18, side: THREE.DoubleSide });
 
-    const obverse = toTexture(drawCoinFace());
-    const reverse = toTexture(drawCoinFaceMap());
-    const edge = toTexture(drawCoinEdge());
-    edge.wrapS = THREE.RepeatWrapping;
-    edge.repeat.set(14, 1);
+    const decalTexture = new THREE.CanvasTexture(drawBangladeshDecal());
+    decalTexture.colorSpace = THREE.SRGBColorSpace;
+    decalTexture.anisotropy = 8;
+    const decal = new THREE.MeshStandardMaterial({
+      map: decalTexture,
+      transparent: true,
+      alphaTest: 0.08,
+      metalness: 1,
+      roughness: 0.28,
+      side: THREE.DoubleSide,
+    });
 
-    // The cap geometry's UVs come out rotated 90° once the coin is tipped into
-    // its Math.PI/2 group rotation, so engraved text runs up the rim instead
-    // of reading upright — rotate the cap textures back to compensate.
-    for (const cap of [obverse, reverse]) {
-      cap.center.set(0.5, 0.5);
-      cap.rotation = Math.PI / 2;
-    }
-
-    // Groups map to [0] side, [1] top cap, [2] bottom cap; metalness stays under 1 since there's no env map to reflect.
-    // Roughness pulled down from the original pass so the multi-light rig below reads as a hard, glinting shine.
-    return [
-      new THREE.MeshStandardMaterial({ map: edge, metalness: 0.9, roughness: 0.22 }),
-      new THREE.MeshStandardMaterial({ map: obverse, metalness: 0.75, roughness: 0.18 }),
-      new THREE.MeshStandardMaterial({ map: reverse, metalness: 0.75, roughness: 0.18 }),
-    ];
+    return { bevel, rim, groove, innerRing, face, text, core, decal };
   }, []);
+}
+
+// --- Face assembly (shared by obverse and reverse) ------------------------
+
+type CoinMaterials = ReturnType<typeof useCoinMaterials>;
+
+function buildRingSet(materials: CoinMaterials) {
+  const group = new THREE.Group();
+
+  const bevelMesh = new THREE.Mesh(
+    makeAnnulusGeometry(BEVEL_OUT, BEVEL_IN, BEVEL_DEPTH, { thickness: 0.006, size: 0.006 }),
+    materials.bevel
+  );
+  group.add(bevelMesh);
+
+  const rimMesh = new THREE.Mesh(makeAnnulusGeometry(RIM_OUT, RIM_IN, RIM_DEPTH), materials.rim);
+  group.add(rimMesh);
+
+  const grooveMesh = new THREE.Mesh(makeAnnulusGeometry(GROOVE_OUT, GROOVE_IN, GROOVE_DEPTH), materials.groove);
+  grooveMesh.position.z = GROOVE_Z;
+  group.add(grooveMesh);
+
+  const ringMesh = new THREE.Mesh(
+    makeAnnulusGeometry(RING_OUT, RING_IN, RING_DEPTH, { thickness: 0.007, size: 0.007 }),
+    materials.innerRing
+  );
+  group.add(ringMesh);
+
+  const faceMesh = new THREE.Mesh(makeDiscGeometry(FACE_R, FACE_DEPTH), materials.face);
+  faceMesh.position.z = FACE_Z;
+  group.add(faceMesh);
+
+  return group;
+}
+
+function buildObverse(font: Font, materials: CoinMaterials) {
+  const group = buildRingSet(materials);
+
+  const arc = buildArcTextGroup(font, "PURE GOLD", 0.565, 0.078, 0.018, materials.text, 0.012);
+  arc.position.z = FACE_TOP;
+  group.add(arc);
+
+  group.add(buildStraightTextMesh(font, "24K", 0.3, 0.026, materials.text, [0, 0.09, FACE_TOP]));
+  group.add(buildStraightTextMesh(font, "GOLD", 0.13, 0.02, materials.text, [0, -0.16, FACE_TOP]));
+  group.add(buildStraightTextMesh(font, "999.9", 0.065, 0.016, materials.text, [0, -0.32, FACE_TOP]));
+
+  return group;
+}
+
+function buildReverse(font: Font, materials: CoinMaterials) {
+  const group = buildRingSet(materials);
+
+  const decal = new THREE.Mesh(new THREE.PlaneGeometry(FACE_R * 2, FACE_R * 2), materials.decal);
+  decal.position.z = FACE_TOP + 0.001;
+  group.add(decal);
+
+  group.add(buildStraightTextMesh(font, "BANGLADESH", 0.072, 0.016, materials.text, [0, -0.42, FACE_TOP]));
+
+  return group;
+}
+
+function buildCoinGroup(font: Font, materials: CoinMaterials) {
+  const root = new THREE.Group();
+
+  const core = new THREE.Mesh(makeRidgedCoreGeometry(CORE_DEPTH), materials.core);
+  core.position.z = -CORE_DEPTH / 2;
+  root.add(core);
+
+  const obverse = buildObverse(font, materials);
+  obverse.position.z = CORE_DEPTH / 2;
+  root.add(obverse);
+
+  const reverse = buildReverse(font, materials);
+  reverse.position.z = -CORE_DEPTH / 2;
+  reverse.rotation.y = Math.PI;
+  root.add(reverse);
+
+  root.traverse((obj) => {
+    if (obj instanceof THREE.Mesh) {
+      obj.castShadow = true;
+      obj.receiveShadow = true;
+    }
+  });
+
+  return root;
 }
 
 // Resting pose the coin holds from the first frame: leaned back hard on the
@@ -301,7 +360,17 @@ function Coin({
   const groupRef = useRef<THREE.Group>(null);
   const scaleRef = useRef(1);
   const materials = useCoinMaterials();
+  const font = useLoader(FontLoader, FONT_URL);
+  const coin = useMemo(() => buildCoinGroup(font, materials), [font, materials]);
   const pointer = useThree((state) => state.pointer);
+
+  useEffect(() => {
+    return () => {
+      coin.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) obj.geometry.dispose();
+      });
+    };
+  }, [coin]);
 
   useFrame((state, delta) => {
     const group = groupRef.current;
@@ -324,11 +393,7 @@ function Coin({
 
   return (
     <group ref={groupRef} position={[0, 0, 0]} rotation={[BASE_TILT_X, 0, BASE_TILT_Z]}>
-      <group rotation={[Math.PI / 2, 0, 0]}>
-        <mesh material={materials} castShadow receiveShadow>
-          <cylinderGeometry args={[1, 1, 0.34, 72]} />
-        </mesh>
-      </group>
+      <primitive object={coin} />
     </group>
   );
 }
@@ -392,7 +457,9 @@ export default function GoldCoinScene() {
           distance={8}
           color="#ffe9a8"
         />
-        <Coin hovered={hovered} scrollProgress={scrollProgress} />
+        <Suspense fallback={null}>
+          <Coin hovered={hovered} scrollProgress={scrollProgress} />
+        </Suspense>
       </Canvas>
     </div>
   );

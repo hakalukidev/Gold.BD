@@ -15,6 +15,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setMobileMenuOpen, toggleMobileMenu, setLocale, type Locale } from "@/store/slices/ui-slice";
 import { useT } from "@/lib/i18n/use-t";
 import { cn } from "@/lib/utils";
+import { CartButton } from "./cart-button";
 
 type NavLink = { href: string; label: string };
 type NavGroup = { label: string; matchPrefix: string; items: NavLink[] };
@@ -101,7 +102,7 @@ export function LandingHeader() {
   };
 
   return (
-    <div className="sticky top-0 z-50 w-full">
+    <div className="w-full">
       <header className="w-full border-b border-[rgba(212,166,42,0.15)] bg-[rgba(3,3,3,0.75)] backdrop-blur-[20px]">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex shrink-0 items-center gap-2.5">
@@ -172,7 +173,8 @@ export function LandingHeader() {
             })}
           </nav>
 
-          <div className="hidden items-center gap-4 lg:flex">
+          <div className="hidden items-center gap-3 lg:flex">
+            <CartButton />
             <LanguageToggle />
             <Button
               variant="gold-solid"
@@ -184,6 +186,7 @@ export function LandingHeader() {
           </div>
 
           <div className="flex items-center gap-1 lg:hidden">
+            <CartButton />
             <LanguageToggle />
             <button
               type="button"

@@ -10,6 +10,7 @@ import { GoldPriceTicker } from "@/components/landing/gold-price-ticker";
 import { HeroSection } from "@/components/landing/hero-section";
 import { TodayPriceSection } from "@/components/landing/today-price-section";
 import { WhySection } from "@/components/landing/why-section";
+import { ProductsSection } from "@/components/landing/products-section";
 import { RateHistorySection } from "@/components/landing/rate-history-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { TrustSection } from "@/components/landing/trust-section";
@@ -22,14 +23,17 @@ export default function LandingPage() {
 
   return (
     <main className="flex flex-1 flex-col">
-      <GoldPriceTicker />
-      <LandingHeader />
+      <div className="sticky top-0 z-50">
+        <GoldPriceTicker />
+        <LandingHeader />
+      </div>
       <StatusStrip />
 
       <HeroSection />
       <TodayPriceSection />
 
       <WhySection />
+      <ProductsSection />
       <RateHistorySection />
 
       {/* ---------- Features ---------- */}

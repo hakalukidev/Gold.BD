@@ -58,7 +58,7 @@ export function LandingHeader() {
 
   const navLinks: NavLink[] = [
     { href: "/", label: t.nav.home },
-    { href: "/buy-gold", label: t.nav.buyGold },
+    { href: "/products", label: t.nav.buyGold },
     { href: "/#rate-history", label: t.nav.prices },
   ];
 

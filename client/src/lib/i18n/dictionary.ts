@@ -256,6 +256,13 @@ const dictionary = {
       body: "মাত্র কয়েক মিনিটে অ্যাকাউন্ট খুলুন এবং সোনা কেনাবেচা শুরু করুন।",
       cta: "শুরু করুন",
     },
+    productsPage: {
+      subheading: "গোল্ড বা সিলভার বার / কয়েন বেছে নিন — হলমার্কযুক্ত, সনদপ্রাপ্ত এবং বিমাকৃত।",
+      hallmarkBadge: "হলমার্কযুক্ত ও সনদপ্রাপ্ত",
+      trustInsured: "বিমাকৃত ভল্ট সংরক্ষণ অথবা হোম ডেলিভারি",
+      trustCertificate: "সত্যতার সনদসহ",
+      trustSellBack: "যেকোনো সময় লাইভ মার্কেট রেটে বিক্রি করুন",
+    },
     calculatorPage: {
       heading: "গোল্ড ক্যালকুলেটর",
       subheading: "গোল্ড, সিলভার, মেকিং চার্জ, ভরি-গ্রাম রূপান্তর ও যাকাত হিসাব — সবকিছু এক জায়গায়।",
@@ -574,6 +581,13 @@ const dictionary = {
       heading: "Open your gold wallet today",
       body: "Create an account in a few minutes and start trading gold.",
       cta: "Get started",
+    },
+    productsPage: {
+      subheading: "Select a gold or silver bar / coin — hallmarked, certified, and insured.",
+      hallmarkBadge: "Hallmarked & certified",
+      trustInsured: "Insured vault storage or home delivery",
+      trustCertificate: "Certificate of authenticity included",
+      trustSellBack: "Sell back anytime at live market rate",
     },
     calculatorPage: {
       heading: "Gold calculator",

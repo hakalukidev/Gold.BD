@@ -404,6 +404,12 @@ function Coin({
     };
   }, [coin]);
 
+  // react-three-fiber's useFrame runs a per-frame imperative animation loop
+  // outside React's render cycle, so mutating the shared drag ref here is
+  // the intended pattern (see the pointer handlers below, which write to
+  // the same ref). The React Compiler lint doesn't model useFrame's
+  // semantics and flags it as a render-time prop mutation.
+  // eslint-disable-next-line react-hooks/immutability
   useFrame((state, delta) => {
     const group = groupRef.current;
     if (!group) return;
@@ -415,6 +421,7 @@ function Coin({
     const dragDeltaX = dragState?.deltaX ?? 0;
     const dragDeltaY = dragState?.deltaY ?? 0;
     if (dragState) {
+      // eslint-disable-next-line react-hooks/immutability -- see note above
       dragState.deltaX = 0;
       dragState.deltaY = 0;
     }

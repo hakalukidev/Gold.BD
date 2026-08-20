@@ -49,7 +49,7 @@ const MINI_CHART_RECORDS = 40;
 const MINI_CHART_WIDTH = 480;
 const MINI_CHART_HEIGHT = 64;
 
-function LiveBadge({ label }: { label: string }) {
+export function LiveBadge({ label }: { label: string }) {
   return (
     <span className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-emerald-400 uppercase">
       <span className="relative flex size-1.5">

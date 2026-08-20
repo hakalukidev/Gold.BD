@@ -33,12 +33,21 @@ const SECTIONS = [
   { id: "zakat", icon: HandCoins },
 ] as const;
 
+// Complete, statically-written class strings per accent — swapped as a whole
+// unit rather than built from an interpolated color name, so Tailwind's build
+// scanner (which reads source text, not runtime values) can always see them.
+const CARD_ACCENT_CLASSES = {
+  gold: { hoverBorder: "hover:border-gold/30", badge: "bg-gold/15 text-gold", index: "text-gold/70" },
+  silver: { hoverBorder: "hover:border-neutral-300/40", badge: "bg-neutral-300/15 text-neutral-200", index: "text-neutral-300/80" },
+} as const;
+
 function CalcCard({
   id,
   icon: Icon,
   index,
   title,
   description,
+  accent = "gold",
   children,
 }: {
   id: string;
@@ -46,20 +55,19 @@ function CalcCard({
   index: number;
   title: string;
   description: string;
+  accent?: keyof typeof CARD_ACCENT_CLASSES;
   children: React.ReactNode;
 }) {
+  const a = CARD_ACCENT_CLASSES[accent];
   return (
-    <section
-      id={id}
-      className="scroll-mt-24 rounded-3xl border border-white/10 bg-white/5 p-6 transition-colors hover:border-gold/30 sm:p-8"
-    >
+    <section id={id} className={`scroll-mt-24 rounded-3xl border border-white/10 bg-white/5 p-6 transition-colors sm:p-8 ${a.hoverBorder}`}>
       <div className="flex items-start gap-4">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gold/15 text-gold">
+        <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${a.badge}`}>
           <Icon className="size-5" />
         </span>
         <div className="min-w-0">
           <div className="flex items-baseline gap-2">
-            <span className="text-xs font-semibold text-gold/70">{String(index).padStart(2, "0")}</span>
+            <span className={`text-xs font-semibold ${a.index}`}>{String(index).padStart(2, "0")}</span>
             <h2 className="text-xl font-bold text-white sm:text-2xl">{title}</h2>
           </div>
           <p className="mt-1 text-sm text-neutral-400">{description}</p>
@@ -104,35 +112,96 @@ function ReadonlyField({ value }: { value: string }) {
 }
 
 /** Splits `n` items into ascending row sizes (1, 2, 3, …) — rendered top-to-bottom
- *  this reads as a pile with a narrow apex and a wide base, like stacked coins/bundles. */
+ *  this reads as a pile with a narrow apex and a wide base, like stacked coins/bundles.
+ *  Any leftover (when `n` isn't a perfect triangular number) is folded into the
+ *  widest rows rather than tacked on as a new, smaller trailing row — otherwise
+ *  that last row reads as a stray item that's drifted off the pile. */
 function pileRows(n: number): number[] {
-  const rows: number[] = [];
-  let remaining = n;
-  let size = 1;
-  while (remaining > 0) {
-    const take = Math.min(size, remaining);
-    rows.push(take);
-    remaining -= take;
-    size++;
+  if (n <= 0) return [];
+  let rowCount = 1;
+  while (((rowCount + 1) * (rowCount + 2)) / 2 <= n) rowCount++;
+
+  const rows = Array.from({ length: rowCount }, (_, i) => i + 1);
+  let remainder = n - (rowCount * (rowCount + 1)) / 2;
+  let i = rows.length - 1;
+  while (remainder > 0) {
+    rows[i] += 1;
+    remainder--;
+    i = i === 0 ? rows.length - 1 : i - 1;
   }
   return rows;
 }
 
-/** Small stacked gold coins — the right-pan pile, sized by how many grams the scale reads. */
-function CoinPile({ count }: { count: number }) {
+// Multi-stop gradients so each bar catches a couple of bright reflective
+// bands rather than one flat sheen, like real polished bullion.
+const BAR_GRADIENTS = {
+  gold: "linear-gradient(100deg, #7a5a12 0%, #f6e3a8 12%, #d4a62a 30%, #fce8a8 48%, #b8860b 66%, #f0cf72 82%, #8a6a1c 100%)",
+  silver: "linear-gradient(100deg, #5b6470 0%, #f4f6f8 12%, #b6bec8 30%, #ffffff 48%, #7c848d 66%, #e3e7ea 82%, #5b6470 100%)",
+} as const;
+
+/** Deterministic "random-looking" offset from an integer seed — safe for SSR
+ *  (unlike Math.random(), it renders identically on server and client) but
+ *  still gives each bar its own slight, non-repeating settle. */
+function jitter(seed: number, range: number): number {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  const frac = x - Math.floor(x);
+  return (frac * 2 - 1) * range;
+}
+
+/** One bullion bar — a trapezoidal ingot silhouette (narrower top, wider
+ *  base, like a real bar's tapered mould), a banded gradient for a glossy
+ *  reflective sheen, an all-around inset bevel for a moulded-metal edge, and
+ *  a debossed stamp rectangle so it reads as an engraved ingot rather than a
+ *  plain gradient block (real bars are too small here for readable text, so
+ *  the stamp's outline alone carries "this has been struck/engraved"). */
+function GoldBar({ background, seed }: { background: string; seed: number }) {
+  return (
+    <div
+      className="relative h-3 w-7 shrink-0 ring-1 ring-black/60"
+      style={{
+        clipPath: "polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%)",
+        background,
+        transform: `translateY(${jitter(seed, 0.8)}px)`,
+        boxShadow:
+          "inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(0,0,0,0.45), inset 1px 0 0 rgba(255,255,255,0.2), inset -1px 0 0 rgba(0,0,0,0.35)",
+      }}
+    >
+      <span
+        className="absolute inset-x-[22%] top-1/2 -translate-y-1/2"
+        style={{
+          height: "50%",
+          borderTop: "0.5px solid rgba(0,0,0,0.55)",
+          borderLeft: "0.5px solid rgba(0,0,0,0.55)",
+          borderBottom: "0.5px solid rgba(255,255,255,0.4)",
+          borderRight: "0.5px solid rgba(255,255,255,0.4)",
+        }}
+      />
+    </div>
+  );
+}
+
+/** A neat pyramid of stacked bars in the right pan — built the same way as
+ *  `MoneyPile`'s bundles (ascending row sizes), so the base row is widest and
+ *  each row above nests in the gaps of the row below, the way bullion bars
+ *  actually stack. The base (frontmost) row overlaps the row above it less
+ *  than the rest, so it reads as sitting slightly forward instead of jammed
+ *  in tight. `variant` swaps the metal tint without touching the pyramid logic. */
+function BarPile({ count, variant = "gold" }: { count: number; variant?: keyof typeof BAR_GRADIENTS }) {
   if (count === 0) return <span className="text-xs text-neutral-600">—</span>;
+  const background = BAR_GRADIENTS[variant];
+  const rows = pileRows(count);
   return (
     <div className="flex flex-col items-center">
-      {pileRows(count).map((rowCount, i) => (
-        <div key={i} className="flex -space-x-1" style={i > 0 ? { marginTop: -6 } : undefined}>
-          {Array.from({ length: rowCount }, (_, j) => (
-            <span
-              key={j}
-              className="size-3.5 rounded-full bg-linear-to-br from-gold-bright to-gold shadow-[0_1px_2px_rgba(0,0,0,0.5)] ring-1 ring-black/40"
-            />
-          ))}
-        </div>
-      ))}
+      {rows.map((rowCount, ri) => {
+        const isFrontRow = ri === rows.length - 1;
+        return (
+          <div key={ri} className="flex -space-x-0.5" style={ri > 0 ? { marginTop: isFrontRow ? -1 : -3 } : undefined}>
+            {Array.from({ length: rowCount }, (_, ci) => (
+              <GoldBar key={ci} background={background} seed={ri * 7 + ci} />
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -157,20 +226,61 @@ function MoneyPile({ count }: { count: number }) {
 
 /** A short round-dashed line reads as a beaded chain without any custom link
  *  geometry — it's a single straight SVG line, so it can't render crooked. */
-function Chain({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }) {
+function Chain({ x1, y1, x2, y2, className }: { x1: number; y1: number; x2: number; y2: number; className: string }) {
   return (
     <line
       x1={x1}
       y1={y1}
       x2={x2}
       y2={y2}
-      className="stroke-gold/70"
+      className={className}
       strokeWidth="2.6"
       strokeDasharray="0.1 5.5"
       strokeLinecap="round"
     />
   );
 }
+
+// Every color used by the scale's metal parts (everything except the pan
+// itself, which already has its own gradient), as complete static class
+// strings per metal — see the note on CARD_ACCENT_CLASSES for why these
+// aren't built from an interpolated color name.
+const APPARATUS_CLASSES = {
+  gold: {
+    beam: "fill-gold",
+    pivot: "fill-gold-bright",
+    pivotGlow: "drop-shadow(0 0 6px rgba(244,198,78,0.7))",
+    pedestalFoot: "fill-gold/70 stroke-gold/90",
+    pedestalStep: "fill-gold/80",
+    column: "fill-gold/80 stroke-gold/40",
+    fluting: "stroke-gold/40",
+    post: "fill-gold/80",
+    ring: "fill-none stroke-gold-bright",
+    chain: "stroke-gold/70",
+    scrollStroke: "fill-none stroke-gold",
+    bright: "fill-gold-bright",
+    urnNeck: "fill-gold/80",
+    crossbar: "fill-gold/80",
+    tasselLine: "stroke-gold/60",
+  },
+  silver: {
+    beam: "fill-neutral-300",
+    pivot: "fill-neutral-100",
+    pivotGlow: "drop-shadow(0 0 6px rgba(226,232,240,0.7))",
+    pedestalFoot: "fill-neutral-400/70 stroke-neutral-200/90",
+    pedestalStep: "fill-neutral-400/80",
+    column: "fill-neutral-400/80 stroke-neutral-400/40",
+    fluting: "stroke-neutral-400/40",
+    post: "fill-neutral-400/80",
+    ring: "fill-none stroke-neutral-100",
+    chain: "stroke-neutral-300/70",
+    scrollStroke: "fill-none stroke-neutral-300",
+    bright: "fill-neutral-100",
+    urnNeck: "fill-neutral-400/80",
+    crossbar: "fill-neutral-400/80",
+    tasselLine: "stroke-neutral-300/60",
+  },
+} as const;
 
 /** A deep, brass-shaded bowl like a real hanging scale pan — round body first,
  *  then a rim ellipse painted on top of it, symmetric by construction since
@@ -183,7 +293,7 @@ function Pan({ cx, gradId }: { cx: number; gradId: string }) {
       <path d={`M ${cx - w} ${rimY} Q ${cx} ${rimY + 42} ${cx + w} ${rimY} Z`} fill={`url(#${gradId})`} stroke="rgba(0,0,0,0.35)" strokeWidth="1" />
       <path
         d={`M ${cx - w * 0.5} ${rimY + 12} Q ${cx - w * 0.1} ${rimY + 5} ${cx + w * 0.15} ${rimY + 11}`}
-        className="fill-none stroke-gold-light/60"
+        className="fill-none stroke-white/50"
         strokeWidth="2.2"
         strokeLinecap="round"
       />
@@ -197,16 +307,24 @@ function Pan({ cx, gradId }: { cx: number; gradId: string }) {
  *  hanging dead-center under that same ring — `ringX` is the only x used for
  *  both, so the pan can't drift sideways off the ring the way a separate
  *  ring/pan-center pair could. */
-function PanAssembly({ ringX, gradId }: { ringX: number; gradId: string }) {
+function PanAssembly({
+  ringX,
+  gradId,
+  metal,
+}: {
+  ringX: number;
+  gradId: string;
+  metal: (typeof APPARATUS_CLASSES)[keyof typeof APPARATUS_CLASSES];
+}) {
   const beamY = 52;
   const rimY = 150;
   const w = 40;
   return (
     <>
-      <circle cx={ringX} cy={beamY} r="6.5" className="fill-none stroke-gold-bright" strokeWidth="2.5" />
-      <Chain x1={ringX} y1={beamY} x2={ringX - w} y2={rimY} />
-      <Chain x1={ringX} y1={beamY} x2={ringX} y2={rimY - 9} />
-      <Chain x1={ringX} y1={beamY} x2={ringX + w} y2={rimY} />
+      <circle cx={ringX} cy={beamY} r="6.5" className={metal.ring} strokeWidth="2.5" />
+      <Chain x1={ringX} y1={beamY} x2={ringX - w} y2={rimY} className={metal.chain} />
+      <Chain x1={ringX} y1={beamY} x2={ringX} y2={rimY - 9} className={metal.chain} />
+      <Chain x1={ringX} y1={beamY} x2={ringX + w} y2={rimY} className={metal.chain} />
       <Pan cx={ringX} gradId={gradId} />
     </>
   );
@@ -220,29 +338,29 @@ const TASSEL_OFFSETS = [-27, -13.5, 0, 13.5, 27];
 
 /** The ornamental finial above the pivot — a center urn flanked by mirrored
  *  scroll wings, with a fringe of tassels hanging from the crossbar. */
-function CrownOrnament() {
+function CrownOrnament({ metal }: { metal: (typeof APPARATUS_CLASSES)[keyof typeof APPARATUS_CLASSES] }) {
   return (
     <g>
       <g transform="translate(200,14)">
-        <path d={SCROLL_WING_PATH} className="fill-none stroke-gold" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="38" cy="9" r="2" className="fill-gold-bright" />
+        <path d={SCROLL_WING_PATH} className={metal.scrollStroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="38" cy="9" r="2" className={metal.bright} />
       </g>
       <g transform="translate(200,14) scale(-1,1)">
-        <path d={SCROLL_WING_PATH} className="fill-none stroke-gold" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="38" cy="9" r="2" className="fill-gold-bright" />
+        <path d={SCROLL_WING_PATH} className={metal.scrollStroke} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="38" cy="9" r="2" className={metal.bright} />
       </g>
 
       {/* center urn */}
-      <path d="M 195 8 L 200 2 L 205 8 Z" className="fill-gold-bright" />
-      <ellipse cx="200" cy="14" rx="5" ry="7" className="fill-gold-bright" />
-      <rect x="197" y="21" width="6" height="9" className="fill-gold/80" />
+      <path d="M 195 8 L 200 2 L 205 8 Z" className={metal.bright} />
+      <ellipse cx="200" cy="14" rx="5" ry="7" className={metal.bright} />
+      <rect x="197" y="21" width="6" height="9" className={metal.urnNeck} />
 
       {/* crossbar + hanging tassels */}
-      <rect x="163" y="30" width="74" height="3" rx="1.5" className="fill-gold/80" />
+      <rect x="163" y="30" width="74" height="3" rx="1.5" className={metal.crossbar} />
       {TASSEL_OFFSETS.map((dx) => (
         <g key={dx}>
-          <line x1={200 + dx} y1="33" x2={200 + dx} y2="37" className="stroke-gold/60" strokeWidth="1" />
-          <ellipse cx={200 + dx} cy="40" rx="2" ry="3" className="fill-gold-bright" />
+          <line x1={200 + dx} y1="33" x2={200 + dx} y2="37" className={metal.tasselLine} strokeWidth="1" />
+          <ellipse cx={200 + dx} cy="40" rx="2" ry="3" className={metal.bright} />
         </g>
       ))}
     </g>
@@ -256,45 +374,112 @@ function CrownOrnament() {
  * positioned overlays (aligned to the SVG's pan coordinates as percentages)
  * so they can be ordinary DOM content instead of baked into the drawing.
  */
-function BalanceScale({ left, right }: { left: React.ReactNode; right: React.ReactNode }) {
+const PAN_METAL_STOPS = {
+  // light upper-left, dark lower-right, like a lit metal bowl
+  gold: [
+    { offset: "0%", color: "#f6e3a8" },
+    { offset: "45%", color: "#d4a62a" },
+    { offset: "100%", color: "#8a6a1c" },
+  ],
+  silver: [
+    { offset: "0%", color: "#f4f6f8" },
+    { offset: "45%", color: "#b6bec8" },
+    { offset: "100%", color: "#6b7280" },
+  ],
+} as const;
+
+function BalanceScale({
+  left,
+  right,
+  metal: metalKey = "gold",
+}: {
+  left: React.ReactNode;
+  right: React.ReactNode;
+  metal?: keyof typeof PAN_METAL_STOPS;
+}) {
   const uid = useId();
   const gradId = `${uid}-pan-grad`;
+  const metal = APPARATUS_CLASSES[metalKey];
 
   return (
     <div className="relative mx-auto mt-6 aspect-[2/1] max-w-md">
       <svg viewBox="0 0 400 200" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
         <defs>
-          {/* brass shading for the pans — light upper-left, dark lower-right, like a lit metal bowl */}
           <linearGradient id={gradId} x1="0.15" y1="0.1" x2="0.9" y2="1">
-            <stop offset="0%" stopColor="#f6e3a8" />
-            <stop offset="45%" stopColor="#d4a62a" />
-            <stop offset="100%" stopColor="#8a6a1c" />
+            {PAN_METAL_STOPS[metalKey].map((s) => (
+              <stop key={s.offset} offset={s.offset} stopColor={s.color} />
+            ))}
           </linearGradient>
         </defs>
 
         {/* fluted pedestal */}
-        <ellipse cx="200" cy="193" rx="56" ry="7" className="fill-gold/70 stroke-gold/90" strokeWidth="1" />
-        <ellipse cx="200" cy="181" rx="38" ry="6" className="fill-gold/80" />
-        <path d="M 192 56 L 208 56 L 211 178 L 189 178 Z" className="fill-gold/80 stroke-gold/40" strokeWidth="1" />
-        <line x1="196" y1="86" x2="204" y2="86" className="stroke-gold/40" strokeWidth="1" />
-        <line x1="195" y1="122" x2="205" y2="122" className="stroke-gold/40" strokeWidth="1" />
+        <ellipse cx="200" cy="193" rx="56" ry="7" className={metal.pedestalFoot} strokeWidth="1" />
+        <ellipse cx="200" cy="181" rx="38" ry="6" className={metal.pedestalStep} />
+        <path d="M 192 56 L 208 56 L 211 178 L 189 178 Z" className={metal.column} strokeWidth="1" />
+        <line x1="196" y1="86" x2="204" y2="86" className={metal.fluting} strokeWidth="1" />
+        <line x1="195" y1="122" x2="205" y2="122" className={metal.fluting} strokeWidth="1" />
 
         {/* scrollwork finial */}
-        <CrownOrnament />
-        <rect x="197" y="33" width="6" height="16" className="fill-gold/80" />
+        <CrownOrnament metal={metal} />
+        <rect x="197" y="33" width="6" height="16" className={metal.post} />
 
         {/* beam */}
-        <rect x="50" y="49" width="300" height="6" rx="3" className="fill-gold" />
-        <circle cx="200" cy="52" r="8" className="fill-gold-bright" style={{ filter: "drop-shadow(0 0 6px rgba(244,198,78,0.7))" }} />
+        <rect x="50" y="49" width="300" height="6" rx="3" className={metal.beam} />
+        <circle cx="200" cy="52" r="8" className={metal.pivot} style={{ filter: metal.pivotGlow }} />
 
         {/* pans — ring, hanging chains and bowl, mirrored left/right from one formula */}
-        <PanAssembly ringX={50} gradId={gradId} />
-        <PanAssembly ringX={350} gradId={gradId} />
+        <PanAssembly ringX={50} gradId={gradId} metal={metal} />
+        <PanAssembly ringX={350} gradId={gradId} metal={metal} />
       </svg>
 
       <div className="absolute bottom-[25%] left-[12.5%] -translate-x-1/2">{left}</div>
       <div className="absolute bottom-[25%] left-[87.5%] -translate-x-1/2">{right}</div>
     </div>
+  );
+}
+
+/** Purely decorative pile size — grows with the real number so the scale visibly
+ *  "fills up" as you type, without pretending to be an exact count. Caps at
+ *  `max` so a large amount doesn't spill coins/bundles off the pan. */
+function pileCount(value: number, step: number, max = 10): number {
+  return Math.min(max, Math.round(value / step) || (value > 0 ? 1 : 0));
+}
+
+/** The editable "money in" field under the left pan — shared by both metal
+ *  calculators so the input styling (banknote icon, focus ring) stays in sync. */
+const FIELD_ACCENT_CLASSES = {
+  gold: "focus:border-gold/60",
+  silver: "focus:border-neutral-300/60",
+} as const;
+
+function MoneyAmountField({
+  id,
+  label,
+  value,
+  onChange,
+  accent = "gold",
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  accent?: keyof typeof FIELD_ACCENT_CLASSES;
+}) {
+  return (
+    <Field label={label} htmlFor={id}>
+      <div className="relative">
+        <Banknote className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-neutral-500" />
+        <input
+          id={id}
+          type="number"
+          min="0"
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`h-10 w-full rounded-lg border border-white/15 bg-ink pr-3 pl-8 text-sm text-white outline-none ${FIELD_ACCENT_CLASSES[accent]}`}
+        />
+      </div>
+    </Field>
   );
 }
 
@@ -310,11 +495,8 @@ function GoldCalculator() {
     return rateNum > 0 ? amountNum / rateNum : 0;
   }, [amount, rate]);
 
-  // Purely decorative pile sizes — grow with the actual numbers so the scale
-  // visibly "fills up" as you type, without pretending to be an exact count.
-  const amountNum = Number(amount) || 0;
-  const bundleCount = Math.min(10, Math.round(amountNum / 3000) || (amountNum > 0 ? 1 : 0));
-  const coinCount = Math.min(10, Math.round(grams * 6) || (grams > 0 ? 1 : 0));
+  const bundleCount = pileCount(Number(amount) || 0, 3000);
+  const barCount = pileCount(grams, 1 / 3, 10);
 
   return (
     <CalcCard id="gold" icon={Coins} index={1} title={c.title} description={c.description}>
@@ -325,23 +507,10 @@ function GoldCalculator() {
       </div>
 
       {/* দাঁড়িপাল্লা — money piles up in the left pan, gold in the right, as you type. */}
-      <BalanceScale left={<MoneyPile count={bundleCount} />} right={<CoinPile count={coinCount} />} />
+      <BalanceScale left={<MoneyPile count={bundleCount} />} right={<BarPile count={barCount} />} />
 
       <div className="mx-auto mt-4 grid max-w-sm grid-cols-2 gap-5 sm:gap-8">
-        <Field label={c.amountLabel} htmlFor="gold-amount">
-          <div className="relative">
-            <Banknote className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-neutral-500" />
-            <input
-              id="gold-amount"
-              type="number"
-              min="0"
-              inputMode="decimal"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="h-10 w-full rounded-lg border border-white/15 bg-ink pr-3 pl-8 text-sm text-white outline-none focus:border-gold/60"
-            />
-          </div>
-        </Field>
+        <MoneyAmountField id="gold-amount" label={c.amountLabel} value={amount} onChange={setAmount} />
         <Field label={c.resultLabel}>
           <ReadonlyField value={`${grams.toFixed(3)} g`} />
         </Field>
@@ -362,20 +531,42 @@ function SilverCalculator() {
     return rateNum > 0 ? amountNum / rateNum : 0;
   }, [amount, rate]);
 
+  const bundleCount = pileCount(Number(amount) || 0, 3000);
+  const barCount = pileCount(grams, 1 / 3, 10);
+
   return (
-    <CalcCard id="silver" icon={Gem} index={2} title={c.title} description={c.description}>
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Field label={c.amountLabel} htmlFor="silver-amount">
-          <NumberInput id="silver-amount" value={amount} onChange={setAmount} />
-        </Field>
-        <Field label={c.rateLabel} htmlFor="silver-rate">
-          <NumberInput id="silver-rate" value={rate} onChange={setRate} />
-        </Field>
+    <CalcCard id="silver" icon={Gem} index={2} title={c.title} description={c.description} accent="silver">
+      {/* Rate sits above the scale like the gold calculator's — but editable
+          here, since silver has no live feed, just an indicative rate. */}
+      <div className="mx-auto max-w-36">
+        <label htmlFor="silver-rate" className="block text-center text-xs text-neutral-400">
+          {c.rateLabel}
+        </label>
+        <input
+          id="silver-rate"
+          type="number"
+          min="0"
+          inputMode="decimal"
+          value={rate}
+          onChange={(e) => setRate(e.target.value)}
+          className="mt-1 h-9 w-full rounded-lg border border-white/15 bg-ink px-3 text-center text-sm font-semibold text-neutral-200 outline-none focus:border-neutral-300/60"
+        />
+      </div>
+
+      {/* দাঁড়িপাল্লা — money piles up in the left pan, silver in the right, as you type. */}
+      <BalanceScale
+        metal="silver"
+        left={<MoneyPile count={bundleCount} />}
+        right={<BarPile count={barCount} variant="silver" />}
+      />
+
+      <div className="mx-auto mt-4 grid max-w-sm grid-cols-2 gap-5 sm:gap-8">
+        <MoneyAmountField id="silver-amount" label={c.amountLabel} value={amount} onChange={setAmount} accent="silver" />
         <Field label={c.resultLabel}>
           <ReadonlyField value={`${grams.toFixed(3)} g`} />
         </Field>
       </div>
-      <p className="mt-3 text-xs text-neutral-500">{c.rateNote}</p>
+      <p className="mt-3 text-center text-xs text-neutral-500">{c.rateNote}</p>
     </CalcCard>
   );
 }

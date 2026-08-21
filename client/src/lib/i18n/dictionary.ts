@@ -231,6 +231,15 @@ const dictionary = {
         { title: "রেট-লিমিটেড API", description: "অস্বাভাবিক ট্রাফিক ও অপব্যবহার থেকে সুরক্ষা।" },
       ],
     },
+    about: {
+      heading: "Gold.bd সম্পর্কে",
+      body: "Gold.bd তৈরি হয়েছে বাংলাদেশের প্রতিটি পরিবারের জন্য সোনা ও রুপা মালিকানাকে সহজ, স্বচ্ছ এবং সহজলভ্য করে তুলতে। আমরা হলমার্কযুক্ত, সনদপ্রাপ্ত মূল্যবান ধাতুর সাথে ব্যাংক-গ্রেড বিমাকৃত ভল্ট সংরক্ষণ এবং আধুনিক ডিজিটাল অভিজ্ঞতা একত্র করেছি — যাতে যে কেউ মাত্র ৫০০ টাকা দিয়েই শুরু করে প্রকৃত, বাস্তব সঞ্চয় গড়ে তুলতে পারেন।",
+      stats: [
+        { value: "৩,০০,০০০+", label: "গ্রাহক" },
+        { value: "১৮ কেজি+", label: "সংরক্ষিত ধাতু" },
+        { value: "১০০%", label: "বিমাকৃত হোল্ডিং" },
+      ],
+    },
     tagline: {
       words: ["সহজ", "নিরাপদ", "স্বচ্ছ"],
       body: "প্রতিটি গ্রাম, প্রতিটি লেনদেন — লেজারে রেকর্ড করা, যেকোনো সময় যাচাইযোগ্য।",
@@ -555,6 +564,15 @@ const dictionary = {
         { title: "Encrypted sessions", description: "Passwords are hashed, and sessions are secured with httpOnly cookies." },
         { title: "NID-based KYC", description: "Every account is verified against a national ID." },
         { title: "Rate-limited API", description: "Protection against abusive or abnormal traffic." },
+      ],
+    },
+    about: {
+      heading: "About Gold.bd",
+      body: "Gold.bd was built to make gold and silver ownership simple, transparent, and accessible for every household in Bangladesh. We combine hallmarked, certified precious metals with bank-grade insured vaulting and a modern digital experience — so anyone can start building real, tangible savings from as little as 500 BDT.",
+      stats: [
+        { value: "300K+", label: "Customers" },
+        { value: "18kg+", label: "Metal vaulted" },
+        { value: "100%", label: "Insured holdings" },
       ],
     },
     tagline: {

@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { Lock, Mail, Phone, User } from "lucide-react";
 import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 import { api, ApiError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { IconInput } from "@/components/shared/icon-input";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -30,9 +31,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card>
+    <Card className="shadow-lg shadow-black/5">
       <CardHeader>
-        <CardTitle>Create your account</CardTitle>
+        <CardTitle className="text-xl">Create your account</CardTitle>
         <CardDescription>Start buying and selling gold in a few minutes.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -45,7 +46,7 @@ export default function RegisterPage() {
                 <FormItem>
                   <FormLabel>Full name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Rahim Uddin" {...field} />
+                    <IconInput icon={User} placeholder="Rahim Uddin" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -58,7 +59,7 @@ export default function RegisterPage() {
                 <FormItem>
                   <FormLabel>Mobile number</FormLabel>
                   <FormControl>
-                    <Input placeholder="01XXXXXXXXX" {...field} />
+                    <IconInput icon={Phone} placeholder="01XXXXXXXXX" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -71,7 +72,7 @@ export default function RegisterPage() {
                 <FormItem>
                   <FormLabel>Email (optional)</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="you@example.com" {...field} />
+                    <IconInput icon={Mail} type="email" placeholder="you@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -84,7 +85,7 @@ export default function RegisterPage() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} />
+                    <IconInput icon={Lock} type="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

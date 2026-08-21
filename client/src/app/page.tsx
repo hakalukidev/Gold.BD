@@ -14,6 +14,7 @@ import { ProductsSection } from "@/components/landing/products-section";
 import { RateHistorySection } from "@/components/landing/rate-history-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { TrustSection } from "@/components/landing/trust-section";
+import { AboutSection } from "@/components/landing/about-section";
 import { TaglineBanner } from "@/components/landing/tagline-banner";
 import { FaqSection } from "@/components/landing/faq-section";
 import { LandingFooter } from "@/components/landing/landing-footer";
@@ -61,6 +62,7 @@ export default function LandingPage() {
 
       <HowItWorksSection />
       <TrustSection />
+      <AboutSection />
       <TaglineBanner />
       <FaqSection />
 

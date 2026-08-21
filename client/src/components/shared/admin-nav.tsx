@@ -2,19 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowDownRight, ArrowUpRight, History, IdCard, LayoutDashboard, Wallet } from "lucide-react";
+import { History, ShieldCheck, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/buy-gold", label: "Buy gold", icon: ArrowUpRight },
-  { href: "/sell-gold", label: "Sell gold", icon: ArrowDownRight },
-  { href: "/wallet", label: "Wallet", icon: Wallet },
-  { href: "/transactions", label: "Transactions", icon: History },
-  { href: "/kyc", label: "KYC", icon: IdCard },
+  { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/rates", label: "Rates", icon: ShieldCheck },
+  { href: "/admin/transactions", label: "Transactions", icon: History },
 ];
 
-export function DashboardNav() {
+export function AdminNav() {
   const pathname = usePathname();
 
   return (

@@ -1,32 +1,21 @@
 import Link from "next/link";
+import { Gem } from "lucide-react";
+import { AdminNav } from "@/components/shared/admin-nav";
 import { UserMenu } from "@/components/shared/user-menu";
-
-const links = [
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/rates", label: "Rates" },
-  { href: "/admin/transactions", label: "Transactions" },
-];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b bg-muted/30">
+    <div className="flex min-h-screen flex-col bg-muted/20">
+      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex flex-wrap items-center gap-6">
-            <Link href="/admin/users" className="text-lg font-semibold">
+            <Link href="/admin/users" className="flex items-center gap-2 text-lg font-semibold">
+              <span className="flex size-7 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-gold">
+                <Gem className="size-3.5" />
+              </span>
               Gold BD Admin
             </Link>
-            <nav className="flex gap-1">
-              {links.map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
+            <AdminNav />
           </div>
           <UserMenu />
         </div>

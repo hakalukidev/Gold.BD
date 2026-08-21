@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { MessageSquareText } from "lucide-react";
 import { verifyOtpSchema, type VerifyOtpInput } from "@/lib/validations/auth";
 import { api, ApiError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
 function VerifyOtpForm() {
   const router = useRouter();
@@ -36,12 +37,15 @@ function VerifyOtpForm() {
   }
 
   return (
-    <Card>
+    <Card className="shadow-lg shadow-black/5">
       <CardHeader>
-        <CardTitle>Enter verification code</CardTitle>
+        <span className="mb-1 flex size-9 items-center justify-center rounded-full border border-gold/30 bg-gold/10 text-gold">
+          <MessageSquareText className="size-4.5" strokeWidth={1.75} />
+        </span>
+        <CardTitle className="text-xl">Enter verification code</CardTitle>
         <CardDescription>
-          We sent a 6-digit code to {phone || "your phone"}. Check the server console in local dev
-          (SMS is mocked).
+          We sent a 6-digit code to {phone ? <span className="font-medium text-foreground">{phone}</span> : "your phone"}.
+          Check the server console in local dev (SMS is mocked).
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -54,7 +58,13 @@ function VerifyOtpForm() {
                 <FormItem>
                   <FormLabel>6-digit code</FormLabel>
                   <FormControl>
-                    <Input inputMode="numeric" maxLength={6} placeholder="123456" {...field} />
+                    <Input
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="123456"
+                      className="h-11 text-center text-lg tracking-[0.5em]"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

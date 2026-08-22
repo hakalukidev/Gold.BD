@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { ArrowDownRight, ArrowUpRight, History, IdCard, LayoutDashboard, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const links = [
+// Shared with dashboard-sidebar-nav.tsx so the two nav variants (compact
+// mobile header vs. desktop sidebar) can't drift apart.
+export const DASHBOARD_NAV_LINKS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/buy-gold", label: "Buy gold", icon: ArrowUpRight },
   { href: "/sell-gold", label: "Sell gold", icon: ArrowDownRight },
@@ -14,12 +16,14 @@ const links = [
   { href: "/kyc", label: "KYC", icon: IdCard },
 ];
 
+/** Compact horizontal nav — used in the mobile header below `lg`, where the
+ * full sidebar (dashboard-sidebar-nav.tsx) is hidden. */
 export function DashboardNav() {
   const pathname = usePathname();
 
   return (
     <nav className="flex flex-wrap gap-1">
-      {links.map((link) => {
+      {DASHBOARD_NAV_LINKS.map((link) => {
         const active = pathname === link.href;
         const Icon = link.icon;
         return (

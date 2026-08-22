@@ -4,13 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { CheckCircle2, Clock, IdCard, ImagePlus, XCircle, type LucideIcon } from "lucide-react";
 import { submitKycSchema, type SubmitKycInput } from "@/lib/validations/kyc";
 import { api, ApiError } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { IconInput } from "@/components/shared/icon-input";
 
 interface KycProfile {
   id: string;
@@ -19,6 +20,12 @@ interface KycProfile {
   status: "PENDING" | "APPROVED" | "REJECTED";
   rejectReason: string | null;
 }
+
+const statusIcon: Record<KycProfile["status"], LucideIcon> = {
+  APPROVED: CheckCircle2,
+  PENDING: Clock,
+  REJECTED: XCircle,
+};
 
 export default function KycPage() {
   const queryClient = useQueryClient();
@@ -50,10 +57,14 @@ export default function KycPage() {
   }
 
   if (profile && profile.status !== "REJECTED") {
+    const StatusIcon = statusIcon[profile.status];
     return (
       <Card className="mx-auto max-w-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <span className="mb-1 flex size-9 items-center justify-center rounded-full border border-gold/30 bg-gold/10 text-gold">
+            <StatusIcon className="size-4.5" strokeWidth={1.75} />
+          </span>
+          <CardTitle className="flex items-center gap-2 text-xl">
             KYC status
             <Badge variant={profile.status === "APPROVED" ? "default" : "secondary"}>
               {profile.status}
@@ -68,7 +79,10 @@ export default function KycPage() {
   return (
     <Card className="mx-auto max-w-md">
       <CardHeader>
-        <CardTitle>Submit KYC</CardTitle>
+        <span className="mb-1 flex size-9 items-center justify-center rounded-full border border-gold/30 bg-gold/10 text-gold">
+          <IdCard className="size-4.5" strokeWidth={1.75} />
+        </span>
+        <CardTitle className="text-xl">Submit KYC</CardTitle>
         <CardDescription>
           {profile?.status === "REJECTED"
             ? `Your previous submission was rejected: ${profile.rejectReason ?? "no reason given"}. Resubmit below.`
@@ -85,7 +99,7 @@ export default function KycPage() {
                 <FormItem>
                   <FormLabel>NID number</FormLabel>
                   <FormControl>
-                    <Input placeholder="1234567890" {...field} />
+                    <IconInput icon={IdCard} placeholder="1234567890" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -98,7 +112,8 @@ export default function KycPage() {
                 <FormItem>
                   <FormLabel>Document URL</FormLabel>
                   <FormControl>
-                    <Input
+                    <IconInput
+                      icon={ImagePlus}
                       placeholder="https://…/nid-front.jpg"
                       onChange={(e) => field.onChange(e.target.value ? [e.target.value] : [])}
                     />

@@ -1,9 +1,11 @@
 "use client";
 
+import { History } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/shared/empty-state";
 import { formatBDT, formatDateTime } from "@/lib/format";
 
 export default function TransactionsPage() {
@@ -16,9 +18,13 @@ export default function TransactionsPage() {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-10 animate-pulse rounded-md bg-muted" />
+            ))}
+          </div>
         ) : !transactions || transactions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No transactions yet.</p>
+          <EmptyState icon={History} title="No transactions yet" description="Buy, sell, deposit, or withdraw to see activity here." />
         ) : (
           <div className="overflow-x-auto">
             <Table>
@@ -35,11 +41,11 @@ export default function TransactionsPage() {
               <TableBody>
                 {transactions.map((t) => (
                   <TableRow key={t.id}>
-                    <TableCell>{formatDateTime(t.createdAt)}</TableCell>
-                    <TableCell>{t.type}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatDateTime(t.createdAt)}</TableCell>
+                    <TableCell className="font-medium">{t.type}</TableCell>
                     <TableCell>{t.goldGrams ? `${t.goldGrams} g` : "—"}</TableCell>
                     <TableCell>{t.pricePerGramBDT ? formatBDT(t.pricePerGramBDT) : "—"}</TableCell>
-                    <TableCell>{formatBDT(t.totalAmountBDT)}</TableCell>
+                    <TableCell className="font-medium">{formatBDT(t.totalAmountBDT)}</TableCell>
                     <TableCell>
                       <Badge
                         variant={

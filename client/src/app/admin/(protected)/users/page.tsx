@@ -2,11 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ShieldAlert, Users } from "lucide-react";
 import { api, ApiError } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/shared/page-header";
+import { EmptyState } from "@/components/shared/empty-state";
 import { formatBDT, formatDateTime } from "@/lib/format";
 
 interface AdminUser {
@@ -50,11 +53,15 @@ function PendingKycReview() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pending KYC review ({pending.length})</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <ShieldAlert className="size-4.5 text-gold" strokeWidth={1.75} />
+          Pending KYC review
+          <Badge variant="secondary">{pending.length}</Badge>
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {pending.map((p) => (
-          <div key={p.id} className="flex items-center justify-between rounded-md border p-3">
+          <div key={p.id} className="flex items-center justify-between rounded-lg border p-3">
             <div>
               <p className="font-medium">{p.user.fullName} · {p.user.phone}</p>
               <p className="text-sm text-muted-foreground">NID: {p.nidNumber}</p>
@@ -91,14 +98,21 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
+      <PageHeader title="Users" description="Everyone with a Gold BD account." />
       <PendingKycReview />
       <Card>
         <CardHeader>
-          <CardTitle>Users</CardTitle>
+          <CardTitle>All users</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-10 animate-pulse rounded-md bg-muted" />
+              ))}
+            </div>
+          ) : !users || users.length === 0 ? (
+            <EmptyState icon={Users} title="No users yet" />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -114,17 +128,17 @@ export default function AdminUsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users?.map((u) => (
+                  {users.map((u) => (
                     <TableRow key={u.id}>
-                      <TableCell>{u.fullName}</TableCell>
-                      <TableCell>{u.phone}</TableCell>
+                      <TableCell className="font-medium">{u.fullName}</TableCell>
+                      <TableCell className="text-muted-foreground">{u.phone}</TableCell>
                       <TableCell>
                         <Badge variant={u.role === "ADMIN" ? "default" : "outline"}>{u.role}</Badge>
                       </TableCell>
                       <TableCell>{u.kycStatus.replace("_", " ")}</TableCell>
                       <TableCell>{formatBDT(u.cashBalanceBDT)}</TableCell>
                       <TableCell>{u.goldBalanceGrams} g</TableCell>
-                      <TableCell>{formatDateTime(u.createdAt)}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatDateTime(u.createdAt)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

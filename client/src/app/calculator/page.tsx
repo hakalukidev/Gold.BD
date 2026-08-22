@@ -12,6 +12,7 @@ import { GoldPriceTicker } from "@/components/landing/gold-price-ticker";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { LiveBadge } from "@/components/landing/today-price-section";
 import { RateChart } from "@/components/landing/rate-chart";
+import { GoldCoinIcon, SilverCoinIcon } from "@/components/landing/dollar-coin-icon";
 
 // 1 bhori (also spelled vori/tola), the standard South Asian gold-trading
 // unit, equals this many grams — the figure used across the BD jewellery trade.
@@ -499,7 +500,7 @@ function GoldCalculator() {
   const barCount = pileCount(grams, 1 / 3, 10);
 
   return (
-    <CalcCard id="gold" icon={Coins} index={1} title={c.title} description={c.description}>
+    <CalcCard id="gold" icon={GoldCoinIcon} index={1} title={c.title} description={c.description}>
       {/* Current rate sits above the scale, like a ticker over the beam. */}
       <div className="text-center">
         <p className="text-xs text-neutral-400">{c.rateLabel}</p>
@@ -531,11 +532,10 @@ function SilverCalculator() {
     return rateNum > 0 ? amountNum / rateNum : 0;
   }, [amount, rate]);
 
-  const bundleCount = pileCount(Number(amount) || 0, 3000);
   const barCount = pileCount(grams, 1 / 3, 10);
 
   return (
-    <CalcCard id="silver" icon={Gem} index={2} title={c.title} description={c.description} accent="silver">
+    <CalcCard id="silver" icon={SilverCoinIcon} index={2} title={c.title} description={c.description} accent="silver">
       {/* Rate sits above the scale like the gold calculator's — but editable
           here, since silver has no live feed, just an indicative rate. */}
       <div className="mx-auto max-w-36">
@@ -556,7 +556,7 @@ function SilverCalculator() {
       {/* দাঁড়িপাল্লা — money piles up in the left pan, silver in the right, as you type. */}
       <BalanceScale
         metal="silver"
-        left={<MoneyPile count={bundleCount} />}
+        left={<SilverCoinIcon className="size-10 drop-shadow-[0_2px_5px_rgba(0,0,0,0.45)]" />}
         right={<BarPile count={barCount} variant="silver" />}
       />
 

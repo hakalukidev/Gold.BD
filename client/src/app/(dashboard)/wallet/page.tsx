@@ -3,14 +3,16 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { ArrowDownToLine, ArrowUpFromLine, Banknote, Gem } from "lucide-react";
 import { depositSchema, withdrawSchema, type DepositInput } from "@/lib/validations/wallet";
 import { ApiError } from "@/lib/api-client";
 import { useDeposit, useWithdraw, useWallet } from "@/hooks/use-wallet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { IconInput } from "@/components/shared/icon-input";
+import { StatCard } from "@/components/shared/stat-card";
 import { formatBDT } from "@/lib/format";
 
 function DepositForm() {
@@ -40,7 +42,8 @@ function DepositForm() {
             <FormItem>
               <FormLabel>Amount (BDT)</FormLabel>
               <FormControl>
-                <Input
+                <IconInput
+                  icon={Banknote}
                   type="number"
                   min="0"
                   step="1"
@@ -53,6 +56,7 @@ function DepositForm() {
           )}
         />
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          <ArrowDownToLine />
           {form.formState.isSubmitting ? "Processing…" : "Deposit"}
         </Button>
       </form>
@@ -87,7 +91,8 @@ function WithdrawForm() {
             <FormItem>
               <FormLabel>Amount (BDT)</FormLabel>
               <FormControl>
-                <Input
+                <IconInput
+                  icon={Banknote}
                   type="number"
                   min="0"
                   step="1"
@@ -100,6 +105,7 @@ function WithdrawForm() {
           )}
         />
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          <ArrowUpFromLine />
           {form.formState.isSubmitting ? "Processing…" : "Withdraw"}
         </Button>
       </form>
@@ -111,27 +117,32 @@ export default function WalletPage() {
   const { data: wallet } = useWallet();
 
   return (
-    <Card className="mx-auto max-w-md">
-      <CardHeader>
-        <CardTitle>Wallet</CardTitle>
-        <CardDescription>
-          Cash balance: <span className="font-medium text-foreground">{wallet ? formatBDT(wallet.cashBalanceBDT) : "…"}</span>
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="deposit">
-          <TabsList className="w-full">
-            <TabsTrigger value="deposit" className="flex-1">Deposit</TabsTrigger>
-            <TabsTrigger value="withdraw" className="flex-1">Withdraw</TabsTrigger>
-          </TabsList>
-          <TabsContent value="deposit" className="pt-4">
-            <DepositForm />
-          </TabsContent>
-          <TabsContent value="withdraw" className="pt-4">
-            <WithdrawForm />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className="mx-auto max-w-md space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <StatCard icon={Banknote} label="Cash balance" value={wallet ? formatBDT(wallet.cashBalanceBDT) : "…"} />
+        <StatCard icon={Gem} label="Gold balance" value={wallet ? `${wallet.goldBalanceGrams} g` : "…"} />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Wallet</CardTitle>
+          <CardDescription>Deposit cash to buy gold, or withdraw your available balance.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="deposit">
+            <TabsList className="w-full">
+              <TabsTrigger value="deposit" className="flex-1">Deposit</TabsTrigger>
+              <TabsTrigger value="withdraw" className="flex-1">Withdraw</TabsTrigger>
+            </TabsList>
+            <TabsContent value="deposit" className="pt-4">
+              <DepositForm />
+            </TabsContent>
+            <TabsContent value="withdraw" className="pt-4">
+              <WithdrawForm />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

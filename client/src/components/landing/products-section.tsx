@@ -12,31 +12,7 @@ import { useMetalRate, type Metal } from "@/hooks/use-metal-rate";
 import { useT } from "@/lib/i18n/use-t";
 import { formatBDT } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-// The platform only tracks one admin-set rate (fine gold/silver price per
-// gram) per metal — 22K, the karat these bars/coins are minted/struck at, is
-// derived from it by purity ratio. Same convention as gold-rate-card.tsx and
-// today-price-section.tsx (redefined locally there too rather than shared).
-const PURITY_22K = 22 / 24;
-
-type Form = "bar" | "coin";
-
-const PRODUCT_IMAGES: Record<Metal, Record<Form, string>> = {
-  gold: { bar: "/products/gold-bar.webp", coin: "/products/gold-coin.webp" },
-  silver: { bar: "/products/silver-bar.webp", coin: "/products/silver-coin.webp" },
-};
-
-// Smaller denominations carry a heavier minting/making-charge premium over
-// the spot rate, narrowing as weight goes up — mirrors how real bar/coin
-// pricing works rather than a flat markup across every size.
-const WEIGHTS = [
-  { grams: 0.5, premium: 0.09, key: "weight0_5" },
-  { grams: 1, premium: 0.065, key: "weight1" },
-  { grams: 5, premium: 0.045, key: "weight5" },
-  { grams: 10, premium: 0.03, key: "weight10" },
-] as const satisfies readonly { grams: number; premium: number; key: string }[];
-
-type Weight = (typeof WEIGHTS)[number];
+import { PRODUCT_IMAGES, PRODUCT_WEIGHTS, PURITY_22K, effectivePricePerGram, type ProductForm as Form, type ProductWeight as Weight } from "@/lib/products";
 
 function ProductCard({
   metal,
@@ -62,7 +38,7 @@ function ProductCard({
   const title = `${weightLabel} ${formLabel}`;
   const kicker = `${t.featured[form === "bar" ? "kickerBar" : "kickerCoin"]} · ${t.featured.karatBadge}`;
 
-  const effectivePerGram = pricePerGram22k !== null ? pricePerGram22k * (1 + weight.premium) : null;
+  const effectivePerGram = effectivePricePerGram(pricePerGram22k, weight);
   const unitPrice = effectivePerGram !== null ? effectivePerGram * weight.grams : null;
   const totalPrice = unitPrice !== null ? unitPrice * qty : null;
   const premiumPct = (weight.premium * 100).toFixed(1);
@@ -80,7 +56,7 @@ function ProductCard({
 
   function handleBuyNow() {
     addWithQty();
-    router.push("/buy-gold");
+    router.push("/checkout");
   }
 
   return (
@@ -175,7 +151,7 @@ export function ProductsSection() {
             <p className="mt-2 max-w-xl text-sm text-neutral-400">{t.featured.subheading}</p>
           </div>
           <Link
-            href="/buy-gold"
+            href="/products/gold"
             className="flex items-center gap-1.5 text-sm font-semibold text-gold transition-colors hover:text-gold-light"
           >
             {t.featured.viewAll}
@@ -223,7 +199,7 @@ export function ProductsSection() {
 
         {/* ---------- Grid ---------- */}
         <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
-          {WEIGHTS.map((weight) => (
+          {PRODUCT_WEIGHTS.map((weight) => (
             <ProductCard key={weight.grams} metal={metal} form={form} weight={weight} pricePerGram22k={price22k} />
           ))}
         </div>

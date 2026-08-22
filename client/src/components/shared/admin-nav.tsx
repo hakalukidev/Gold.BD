@@ -2,21 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { History, ShieldCheck, Users } from "lucide-react";
+import { History, Settings, ShieldCheck, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const links = [
+// Shared with admin-sidebar-nav.tsx so the two nav variants (compact mobile
+// header vs. desktop sidebar) can't drift apart.
+export const ADMIN_NAV_LINKS = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/rates", label: "Rates", icon: ShieldCheck },
   { href: "/admin/transactions", label: "Transactions", icon: History },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
+/** Compact horizontal nav — used in the mobile header below `lg`, where the
+ * full sidebar (admin-sidebar-nav.tsx) is hidden. */
 export function AdminNav() {
   const pathname = usePathname();
 
   return (
     <nav className="flex flex-wrap gap-1">
-      {links.map((link) => {
+      {ADMIN_NAV_LINKS.map((link) => {
         const active = pathname === link.href;
         const Icon = link.icon;
         return (

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { ArrowLeft, Check, CreditCard, Minus, Plus, Smartphone, Store, Trash2, Truck, Wallet } from "lucide-react";
+import { ArrowLeft, Check, Minus, Plus, Store, Trash2, Truck, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearCart, removeFromCart, updateQuantity } from "@/store/slices/cart-slice";
@@ -88,6 +88,22 @@ function OptionCard({
       <p className="text-xs text-neutral-400">{description}</p>
     </button>
   );
+}
+
+/** Payment-method badges — real logos where we have one (bKash's official
+ *  mark, plus Visa/Mastercard/Nagad recreations), a generic wallet icon for
+ *  "other" since that option isn't tied to one brand. */
+function PaymentLogo({ method }: { method: PaymentMethod }) {
+  if (method === "bkash") return <Image src="/payment-logos/bkash.svg" alt="bKash" width={48} height={32} className="h-6 w-auto" />;
+  if (method === "nagad") return <Image src="/payment-logos/nagad.svg" alt="Nagad" width={48} height={32} className="h-6 w-auto" />;
+  if (method === "card")
+    return (
+      <span className="flex items-center gap-1.5">
+        <Image src="/payment-logos/visa.svg" alt="Visa" width={40} height={24} className="h-5 w-auto" />
+        <Image src="/payment-logos/mastercard.svg" alt="Mastercard" width={28} height={17} className="h-5 w-auto" />
+      </span>
+    );
+  return <Wallet className="size-4 text-gold" />;
 }
 
 export default function CheckoutPage() {
@@ -432,8 +448,8 @@ export default function CheckoutPage() {
                   <p className="text-xs font-semibold text-neutral-300">{c.paymentHeading}</p>
                   <div className="mt-3 flex flex-col gap-2">
                     {PAYMENT_METHODS.map((method: PaymentMethod) => {
-                      const Icon = method === "bkash" ? Smartphone : method === "card" ? CreditCard : Wallet;
-                      const label = method === "bkash" ? c.paymentBkash : method === "card" ? c.paymentCard : c.paymentOther;
+                      const label =
+                        method === "bkash" ? c.paymentBkash : method === "nagad" ? c.paymentNagad : method === "card" ? c.paymentCard : c.paymentOther;
                       const selected = paymentMethod === method;
                       return (
                         <button
@@ -446,8 +462,8 @@ export default function CheckoutPage() {
                             selected ? "border-gold bg-gold/5" : "border-white/10 hover:border-white/25"
                           )}
                         >
-                          <span className="flex items-center gap-2 text-sm font-semibold text-white">
-                            <Icon className="size-4 text-gold" />
+                          <span className="flex items-center gap-2.5 text-sm font-semibold text-white">
+                            <PaymentLogo method={method} />
                             {label}
                           </span>
                           <span

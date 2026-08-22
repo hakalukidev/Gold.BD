@@ -10,7 +10,7 @@ const bdPhone = z
 export const DELIVERY_METHODS = ["home", "pickup"] as const;
 export type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
 
-export const PAYMENT_METHODS = ["bkash", "card", "other"] as const;
+export const PAYMENT_METHODS = ["bkash", "nagad", "card", "other"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const checkoutSchema = z

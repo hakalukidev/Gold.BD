@@ -6,7 +6,7 @@ import { UserMenu } from "@/components/shared/user-menu";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const brandMark = (
-    <Link href="/dashboard" className="flex items-center gap-2.5">
+    <Link href="/" className="flex items-center gap-2.5">
       <span className="flex size-8 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-gold">
         <Gem className="size-4" />
       </span>

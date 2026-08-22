@@ -56,7 +56,7 @@ function ProductCard({
 
   function handleBuyNow() {
     addWithQty();
-    router.push("/buy-gold");
+    router.push("/checkout");
   }
 
   return (
@@ -151,7 +151,7 @@ export function ProductsSection() {
             <p className="mt-2 max-w-xl text-sm text-neutral-400">{t.featured.subheading}</p>
           </div>
           <Link
-            href="/buy-gold"
+            href="/products/gold"
             className="flex items-center gap-1.5 text-sm font-semibold text-gold transition-colors hover:text-gold-light"
           >
             {t.featured.viewAll}

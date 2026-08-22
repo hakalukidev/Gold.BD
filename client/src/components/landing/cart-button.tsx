@@ -77,7 +77,7 @@ export function CartButton({ className }: { className?: string }) {
               size="lg"
               nativeButton={false}
               className="mt-3 w-full text-xs"
-              render={<Link href="/buy-gold">{t.nav.cartCheckout}</Link>}
+              render={<Link href="/checkout">{t.nav.cartCheckout}</Link>}
             />
           </>
         )}

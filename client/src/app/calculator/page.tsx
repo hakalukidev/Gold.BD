@@ -532,7 +532,6 @@ function SilverCalculator() {
     return rateNum > 0 ? amountNum / rateNum : 0;
   }, [amount, rate]);
 
-  const bundleCount = pileCount(Number(amount) || 0, 3000);
   const barCount = pileCount(grams, 1 / 3, 10);
 
   return (
@@ -557,7 +556,7 @@ function SilverCalculator() {
       {/* দাঁড়িপাল্লা — money piles up in the left pan, silver in the right, as you type. */}
       <BalanceScale
         metal="silver"
-        left={<MoneyPile count={bundleCount} />}
+        left={<SilverCoinIcon className="size-10 drop-shadow-[0_2px_5px_rgba(0,0,0,0.45)]" />}
         right={<BarPile count={barCount} variant="silver" />}
       />
 
